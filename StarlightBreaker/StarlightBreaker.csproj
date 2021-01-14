@@ -55,9 +55,6 @@
       <HintPath>Lib\FFXIV_ACT_Plugin_SDK\SDK\FFXIV_ACT_Plugin.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Iced">
-      <HintPath>Lib\Zodiark\Iced.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

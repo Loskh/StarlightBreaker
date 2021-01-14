@@ -80,7 +80,7 @@ namespace StarlightBreaker
 
         private void Attach() {
             Mordion = new ZodiarkProcess(FFXIV);
-            var SkipAddress = Mordion.Scanner.ScanText("74 ?? 48 8B CF E8 ?? ?? ?? ?? 48 8B D0 4D 8B C6");
+            var SkipAddress = Mordion.Scanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
             StarPatch = Mordion.SetPatch(SkipAddress, new byte?[] { 0xEB });
             StarPatch.Enable();
             lbl.Text = "反和谐已开启";
