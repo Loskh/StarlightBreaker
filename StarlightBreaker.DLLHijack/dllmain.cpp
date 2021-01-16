@@ -24,7 +24,7 @@ VOID DllHijack(HMODULE hMod) {
 VOID StarBreaker() {
   //std::ofstream out("./log.log", std::ios::app);
   signature_scanner *sig = new signature_scanner();
-  DWORD_PTR address = sig->search("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
+  DWORD_PTR address = sig->search("74??488BD3E8????????488BC3");
   delete sig;
   //out << std ::hex << address << std ::endl;
   char* p;
