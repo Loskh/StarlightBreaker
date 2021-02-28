@@ -81,7 +81,7 @@ namespace StarlightBreaker
 
         private void Attach() {
             try {
-                if (FFXIV.ProcessName == "ffxiv_dx11.exe") {
+                if (FFXIV.ProcessName == "ffxiv_dx11") {
                     Mordion = new ZodiarkProcess(FFXIV);
                     var ChatLogSkipAddress = Mordion.Scanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
                     ChatLogStarPatch = Mordion.SetPatch(ChatLogSkipAddress, new byte?[] { 0xEB });
