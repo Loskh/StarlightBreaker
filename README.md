@@ -5,4 +5,4 @@ FFXIV国服屏蔽词解除
 使用方法：选择一个喜欢的就行，不可同时选择
 
 * 使用ACT插件管理加载StarlightBreaker.dll即可~
-* 将游戏根目录下面的SoundCoreBridge.dll重命名为SoundCoreBridge.Real.dll，并将SoundCoreBridge.dll放在同目录
+* ~~将游戏根目录下面的SoundCoreBridge.dll重命名为SoundCoreBridge.Real.dll，并将SoundCoreBridge.dll放在同目录 暂不可用~~
