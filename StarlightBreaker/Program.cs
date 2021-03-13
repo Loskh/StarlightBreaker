@@ -1,10 +1,11 @@
-using Advanced_Combat_Tracker;
+﻿using Advanced_Combat_Tracker;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -34,6 +35,16 @@ namespace StarlightBreaker
             _processSwitcher = new BackgroundWorker { WorkerSupportsCancellation = true };
             _processSwitcher.DoWork += ProcessSwitcher;
             _processSwitcher.RunWorkerAsync();
+            HideTab();
+        }
+
+        public void HideTab() {
+            FormActMain oFormActMain = ActGlobals.oFormActMain;
+            var tcPlugins = (TabControl)typeof(FormActMain).GetField("tcPlugins", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(oFormActMain);
+            foreach (TabPage tab in tcPlugins.TabPages) {
+                if (tab.Text.ToUpper() == "StarlightBreaker.dll".ToUpper())
+                    tcPlugins.TabPages.Remove(tab);
+            }
         }
 
         private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFfxivPlugin() {
@@ -94,14 +105,20 @@ namespace StarlightBreaker
                     pfinderStarPatch.Enable();
                     pfinderDialogStarPatch.Enable();
                     statusLabel.Text = "反和谐已开启";
+
                 }
                 else {
-                    MessageBox.Show($"2021年了，别用Dx9了", "幹，老兄你的游戏好雞瓣怪啊",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"2021年了，别用Dx9了", "幹，老兄你的游戏好雞掰怪啊", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     throw new Exception("不支持FFXIV Dx9");
                 }
             }
             catch (Exception ex) {
+#if SlientMode
+#else
                 MessageBox.Show($"反和谐开启失败！\n{ex.Message}");
+#endif
+                ActGlobals.oFormActMain.WriteExceptionLog(ex, "反和谐异常");
+
                 statusLabel.Text = "反和谐开启失败";
             }
 
