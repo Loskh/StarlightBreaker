@@ -130,13 +130,17 @@ namespace StarlightBreaker
 
         private void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
         {
+#if DEBUG
+            PluginLog.Log(type.ToString());
+            PluginLog.Log(sender.TextValue);
+#endif
             if (!this.configuration.EnableColorWords)
                 return;
+            if (sender.TextValue == "")
+                return;
+            if (this.pluginInterface.ClientState.LocalPlayer == null)
+                return;
             var senderName = GetSenderName(sender.TextValue);
-#if DEBUG
-            PluginLog.Log(senderName);
-            PluginLog.Log(this.pluginInterface.ClientState.LocalPlayer.Name);
-#endif
             if (senderName != this.pluginInterface.ClientState.LocalPlayer.Name)
                 return;
             var newPayload = new List<Payload>();
