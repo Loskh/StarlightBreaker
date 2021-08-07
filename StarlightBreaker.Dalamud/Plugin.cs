@@ -50,13 +50,16 @@ namespace StarlightBreaker
             internal ChatPayload(string text)
             {
                 var stringBytes = Encoding.UTF8.GetBytes(text);
+#if DEBUG
+                PluginLog.Log($"stringBytes={stringBytes.Length}");
+#endif
                 this.textPtr = Marshal.AllocHGlobal(stringBytes.Length + 30);
                 Marshal.Copy(stringBytes, 0, this.textPtr, stringBytes.Length);
                 Marshal.WriteByte(this.textPtr + stringBytes.Length, 0);
 
                 this.textLen = (ulong)(stringBytes.Length + 1);
 
-                this.unk1 = 64;
+                this.unk1 = 0x200;
                 this.unk2 = 0;
             }
 
@@ -72,6 +75,9 @@ namespace StarlightBreaker
             this.configuration = this.pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.configuration.Initialize(this.pluginInterface);
             this.ui = new PluginUI(this);
+#if DEBUG
+            DrawConfigUI();
+#endif
             try
             {
                 IntPtr address = pluginInterface.TargetModuleScanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
@@ -125,6 +131,11 @@ namespace StarlightBreaker
 
         private void OnCommand(string command, string arguments)
         {
+#if DEBUG
+            PluginLog.Log($"origin:{arguments}");
+            var testStr = GetProcessedString(arguments);
+            PluginLog.Log($"origin:{testStr}");
+#endif
             DrawConfigUI();
         }
 

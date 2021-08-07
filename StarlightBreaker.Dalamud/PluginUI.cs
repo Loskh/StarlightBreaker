@@ -28,6 +28,7 @@ namespace StarlightBreaker
             if (!IsVisible)
                 return;
             ImGui.Begin("StarLightBreaker");
+
             ImGui.Checkbox("Enable", ref IsEnable);
 
             ImGui.Checkbox("Color For Profanitay Words in ChatLog",ref IsEnableColorWords);
