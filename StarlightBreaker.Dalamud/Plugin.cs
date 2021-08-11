@@ -295,8 +295,6 @@ namespace StarlightBreaker
 
         public Patch(IntPtr address, byte[] patchBytes)
         {
-            if (Address == IntPtr.Zero)
-                return;
             Address = address;
             OriginBytes = new byte[patchBytes.Length];
             PatchBytes = patchBytes;
