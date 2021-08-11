@@ -80,28 +80,38 @@ namespace StarlightBreaker
 #endif
             try
             {
-                IntPtr address = pluginInterface.TargetModuleScanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
-                ChatLogStarPatch = new Patch(address, new byte[1] { 0xEB });
-                IntPtr address2 = pluginInterface.TargetModuleScanner.ScanText("48 8B D6 E8 ?? ?? ?? ?? 80 BF") + 3;
-                pfinderStarPatch = new Patch(address2, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
-                IntPtr address3 = pluginInterface.TargetModuleScanner.ScanText("4C 8B C7 E8 ?? ?? ?? ?? 40 38 B3") + 3;
-                pfinderDialogStarPatch = new Patch(address3, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
+                ChatLogStarPatch = new Patch(IntPtr.Zero, new byte[1] { 0xEB });
+                pfinderStarPatch = new Patch(IntPtr.Zero, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
+                pfinderDialogStarPatch = new Patch(IntPtr.Zero, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
 
+                ChatLogStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
+                pfinderStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("48 8B D6 E8 ?? ?? ?? ?? 80 BF") + 3;
+                pfinderDialogStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("4C 8B C7 E8 ?? ?? ?? ?? 40 38 B3") + 3;
+
+                UpdataPatch();
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error(ex, "开启反和谐失败\n如果已经使用ACT版本的StarlightBreaker，请关闭此ACT插件", Array.Empty<object>());
+            }
+
+            try {
                 var g_Framework_2 = this.pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
                 unk = Marshal.ReadIntPtr(Marshal.ReadIntPtr(g_Framework_2) + 0x29D8);
 
                 var filterSeStringPtr = this.pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA");
                 FilterSeStringFunc = Marshal.GetDelegateForFunctionPointer<FilterSeStringDelegate>(filterSeStringPtr);
-                UpdataPatch();
-                PluginLog.Log("Turn off profanity filter", Array.Empty<object>());
+
+                this.pluginInterface.Framework.Gui.Chat.OnChatMessage += Chat_OnChatMessage;
+
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, "LogFilter encountered a critical error ", Array.Empty<object>());
+                PluginLog.Error(ex, "开启屏蔽词染色失败", Array.Empty<object>());
             }
             this.pluginInterface.UiBuilder.OnBuildUi += this.ui.Draw;
             this.pluginInterface.UiBuilder.OnOpenConfigUi += (sender, args) => DrawConfigUI();
-            this.pluginInterface.Framework.Gui.Chat.OnChatMessage += Chat_OnChatMessage;
+
             this.pluginInterface.CommandManager.AddHandler("/slb", new CommandInfo(OnCommand)
             {
                 HelpMessage = "Open Config Window for StarlightBreaker"
@@ -185,7 +195,7 @@ namespace StarlightBreaker
         public string GetProcessedString(string str)
         {
             if (unk == IntPtr.Zero)
-                return "";
+                return str;
             using var payload = new ChatPayload(str);
             var mem1 = Marshal.AllocHGlobal(400);
             Marshal.StructureToPtr(payload, mem1, false);
@@ -285,6 +295,8 @@ namespace StarlightBreaker
 
         public Patch(IntPtr address, byte[] patchBytes)
         {
+            if (Address == IntPtr.Zero)
+                return;
             Address = address;
             OriginBytes = new byte[patchBytes.Length];
             PatchBytes = patchBytes;
@@ -293,12 +305,16 @@ namespace StarlightBreaker
 
         public void Enable()
         {
+            if (Address == IntPtr.Zero)
+                return;
             Dalamud.SafeMemory.WriteBytes(Address, PatchBytes);
             Enabled = true;
         }
 
         public void Disable()
         {
+            if (Address == IntPtr.Zero)
+                return;
             Dalamud.SafeMemory.WriteBytes(Address, OriginBytes);
             Enabled = false;
         }

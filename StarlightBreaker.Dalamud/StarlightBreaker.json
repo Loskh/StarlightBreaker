@@ -4,7 +4,7 @@
   // this will be set to your AssemblyName automatically
   "InternalName": "StarlightBreaker",
   // this will be set to your assembly's version automatically
-  "AssemblyVersion": "1.2.1.0",
+  "AssemblyVersion": "1.2.3.0",
   "Description": "Turn off profanity filter.",
   // this will be set to "any" automatically
   "ApplicableVersion": "any",
