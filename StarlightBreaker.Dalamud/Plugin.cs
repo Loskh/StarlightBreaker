@@ -4,19 +4,22 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Dalamud.Data;
+using Dalamud.Game;
+using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.IoC;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 
 namespace StarlightBreaker
 {
-    public class Plugin : IDalamudPlugin
+    public sealed class Plugin : IDalamudPlugin
     {
-        public DalamudPluginInterface pluginInterface;
-        public Configuration configuration;
-
         public string Name => "StarlightBreaker";
 
         private Patch ChatLogStarPatch;
@@ -32,48 +35,32 @@ namespace StarlightBreaker
         public delegate IntPtr FilterSeStringDelegate(IntPtr unk, IntPtr seString);
         public FilterSeStringDelegate FilterSeStringFunc;
 
-        [StructLayout(LayoutKind.Explicit)]
-        private readonly struct ChatPayload : IDisposable
+        [PluginService]
+        [RequiredVersion("1.0")]
+        private DalamudPluginInterface PluginInterface { get; init; }
+        [PluginService]
+        [RequiredVersion("1.0")]
+        private SigScanner Scanner { get; init; }
+        [PluginService]
+        [RequiredVersion("1.0")]
+        private CommandManager CommandManager { get; init; }
+        [PluginService]
+        [RequiredVersion("1.0")]
+        private ClientState ClientState { get; init; }
+        [PluginService]
+        [RequiredVersion("1.0")]
+        private ChatGui ChatGui { get; init; }
+        [PluginService]
+        [RequiredVersion("1.0")]
+        internal DataManager DataManager { get; init; }
+
+        private PluginUI PluginUi { get; init; }
+        internal Configuration Configuration { get; init; }
+
+        public Plugin()
         {
-            [FieldOffset(0)]
-            private readonly IntPtr textPtr;
-
-            [FieldOffset(16)]
-            private readonly ulong textLen;
-
-            [FieldOffset(8)]
-            private readonly ulong unk1;
-
-            [FieldOffset(24)]
-            private readonly ulong unk2;
-
-            internal ChatPayload(string text)
-            {
-                var stringBytes = Encoding.UTF8.GetBytes(text);
-#if DEBUG
-                PluginLog.Log($"stringBytes={stringBytes.Length}");
-#endif
-                this.textPtr = Marshal.AllocHGlobal(stringBytes.Length + 30);
-                Marshal.Copy(stringBytes, 0, this.textPtr, stringBytes.Length);
-                Marshal.WriteByte(this.textPtr + stringBytes.Length, 0);
-
-                this.textLen = (ulong)(stringBytes.Length + 1);
-
-                this.unk1 = 0x200;
-                this.unk2 = 0;
-            }
-
-            public void Dispose()
-            {
-                Marshal.FreeHGlobal(this.textPtr);
-            }
-        }
-
-        public void Initialize(DalamudPluginInterface pluginInterface)
-        {
-            this.pluginInterface = pluginInterface;
-            this.configuration = this.pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.configuration.Initialize(this.pluginInterface);
+            this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            this.Configuration.Initialize(this.PluginInterface);
             this.ui = new PluginUI(this);
 #if DEBUG
             DrawConfigUI();
@@ -84,9 +71,9 @@ namespace StarlightBreaker
                 pfinderStarPatch = new Patch(IntPtr.Zero, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
                 pfinderDialogStarPatch = new Patch(IntPtr.Zero, new byte[5] { 0x90, 0x90, 0x90, 0x90, 0x90 });
 
-                ChatLogStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
-                pfinderStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("48 8B D6 E8 ?? ?? ?? ?? 80 BF") + 3;
-                pfinderDialogStarPatch.Address = pluginInterface.TargetModuleScanner.ScanText("4C 8B C7 E8 ?? ?? ?? ?? 40 38 B3") + 3;
+                ChatLogStarPatch.Address = Scanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
+                pfinderStarPatch.Address = Scanner.ScanText("48 8B D6 E8 ?? ?? ?? ?? 80 BF") + 3;
+                pfinderDialogStarPatch.Address = Scanner.ScanText("4C 8B C7 E8 ?? ?? ?? ?? 40 38 B3") + 3;
 
                 UpdataPatch();
             }
@@ -95,24 +82,25 @@ namespace StarlightBreaker
                 PluginLog.Error(ex, "开启反和谐失败\n如果已经使用ACT版本的StarlightBreaker，请关闭此ACT插件", Array.Empty<object>());
             }
 
-            try {
-                var g_Framework_2 = this.pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
+            try
+            {
+                var g_Framework_2 = this.Scanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
                 unk = Marshal.ReadIntPtr(Marshal.ReadIntPtr(g_Framework_2) + 0x29D8);
 
-                var filterSeStringPtr = this.pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA");
+                var filterSeStringPtr = this.Scanner.ScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA");
                 FilterSeStringFunc = Marshal.GetDelegateForFunctionPointer<FilterSeStringDelegate>(filterSeStringPtr);
 
-                this.pluginInterface.Framework.Gui.Chat.OnChatMessage += Chat_OnChatMessage;
+                this.ChatGui.ChatMessage += Chat_OnChatMessage;
 
             }
             catch (Exception ex)
             {
                 PluginLog.Error(ex, "开启屏蔽词染色失败", Array.Empty<object>());
             }
-            this.pluginInterface.UiBuilder.OnBuildUi += this.ui.Draw;
-            this.pluginInterface.UiBuilder.OnOpenConfigUi += (sender, args) => DrawConfigUI();
+            this.PluginInterface.UiBuilder.Draw += this.ui.Draw;
+            this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 
-            this.pluginInterface.CommandManager.AddHandler("/slb", new CommandInfo(OnCommand)
+            this.CommandManager.AddHandler("/slb", new CommandInfo(OnCommand)
             {
                 HelpMessage = "Open Config Window for StarlightBreaker"
             });
@@ -120,13 +108,14 @@ namespace StarlightBreaker
 
         public void UpdataPatch()
         {
-            if (configuration.Enable)
+            if (Configuration.Enable)
             {
                 ChatLogStarPatch.Enable();
                 pfinderStarPatch.Enable();
                 pfinderDialogStarPatch.Enable();
             }
-            else {
+            else
+            {
                 ChatLogStarPatch.Disable();
                 pfinderStarPatch.Disable();
                 pfinderDialogStarPatch.Disable();
@@ -155,14 +144,14 @@ namespace StarlightBreaker
             PluginLog.Log(type.ToString());
             PluginLog.Log(sender.TextValue);
 #endif
-            if (!this.configuration.EnableColorWords)
+            if (!this.Configuration.EnableColorWords)
                 return;
             if (sender.TextValue == "")
                 return;
-            if (this.pluginInterface.ClientState.LocalPlayer == null)
+            if (this.ClientState.LocalPlayer == null)
                 return;
             var senderName = GetSenderName(sender.TextValue);
-            if (senderName != this.pluginInterface.ClientState.LocalPlayer.Name)
+            if (senderName != this.ClientState.LocalPlayer.Name.TextValue)
                 return;
             var newPayload = new List<Payload>();
             foreach (var payload in message.Payloads)
@@ -205,23 +194,22 @@ namespace StarlightBreaker
             return processedStr.TextValue;
         }
 
-        internal SeString GetSeStringFromPtr(IntPtr seStringPtr)
+        internal unsafe SeString GetSeStringFromPtr(IntPtr seStringPtr)
         {
-            byte b;
+            //byte b;
             var offset = 0;
             unsafe
             {
-                while ((b = *(byte*)(seStringPtr + offset)) != 0)
+                while ((*(byte*)(seStringPtr + offset)) != 0)
                     offset++;
             }
-            var bytes = new byte[offset];
-            Marshal.Copy(seStringPtr, bytes, 0, offset);
-            return pluginInterface.SeStringManager.Parse(bytes);
+            //var bytes = new byte[offset];
+            //Marshal.Copy(seStringPtr, bytes, 0, offset);
+            return SeString.Parse((byte*)seStringPtr, offset);
         }
 
         private List<Payload> DiffString(string str1, string str2)
         {
-            var data = this.pluginInterface.Data;
             var seString = new List<Payload> { };
             var i = 0;
             while (i < str1.Length)
@@ -233,9 +221,9 @@ namespace StarlightBreaker
                     {
                         next++;
                     }
-                    seString.Add(new UIForegroundPayload(data, (ushort)configuration.Color));
+                    seString.Add(new UIForegroundPayload((ushort)Configuration.Color));
                     seString.Add(new TextPayload(str1.Substring(i, next - i)));
-                    seString.Add(new UIForegroundPayload(data, 0));
+                    seString.Add(new UIForegroundPayload(0));
                     i = next;
                 }
                 else
@@ -252,13 +240,11 @@ namespace StarlightBreaker
             return seString;
         }
 
-#region IDisposable Support
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
-            if (!disposing) return;
-            this.pluginInterface.UiBuilder.OnBuildUi -= this.ui.Draw;
-            this.pluginInterface.Framework.Gui.Chat.OnChatMessage -= Chat_OnChatMessage;
-            this.pluginInterface.CommandManager.RemoveHandler("/slb");
+            this.PluginInterface.UiBuilder.Draw -= this.ui.Draw;
+            this.ChatGui.ChatMessage -= Chat_OnChatMessage;
+            this.CommandManager.RemoveHandler("/slb");
             if (ChatLogStarPatch != null)
             {
                 ChatLogStarPatch.Dispose();
@@ -272,15 +258,9 @@ namespace StarlightBreaker
                 pfinderDialogStarPatch.Dispose();
             }
 
-            this.pluginInterface.Dispose();
+            this.PluginInterface.Dispose();
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-#endregion
     }
 
     public class Patch : IDisposable

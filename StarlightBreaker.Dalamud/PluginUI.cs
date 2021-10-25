@@ -19,9 +19,9 @@ namespace StarlightBreaker
         public PluginUI(Plugin plugin)
         {
             this.Plugin = plugin;
-            this.uiColours = plugin.pluginInterface.Data.Excel.GetSheet<UIColor>();
-            this.IsEnable = plugin.configuration.Enable;
-            ButtonColor = uiColours.GetRow(this.Plugin.configuration.Color).UIForeground;
+            this.uiColours = plugin.DataManager.Excel.GetSheet<UIColor>();
+            this.IsEnable = plugin.Configuration.Enable;
+            ButtonColor = uiColours.GetRow(this.Plugin.Configuration.Color).UIForeground;
         }
         public void Draw()
         {
@@ -60,11 +60,11 @@ namespace StarlightBreaker
             return;
         }
         private void UpdateConfig() {
-            this.Plugin.configuration.Color = Color;
-            this.Plugin.configuration.Enable = IsEnable;
-            this.Plugin.configuration.EnableColorWords = IsEnableColorWords;
+            this.Plugin.Configuration.Color = Color;
+            this.Plugin.Configuration.Enable = IsEnable;
+            this.Plugin.Configuration.EnableColorWords = IsEnableColorWords;
             this.Plugin.UpdataPatch();
-            this.Plugin.configuration.Save();
+            this.Plugin.Configuration.Save();
     }
         private void ShowColorPicker()
         {

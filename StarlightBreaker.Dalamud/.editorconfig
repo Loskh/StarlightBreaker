@@ -14,3 +14,6 @@ dotnet_style_qualification_for_property = false:none
 
 # IDE0060: Remove unused parameter
 dotnet_code_quality_unused_parameters = non_public:suggestion
+
+# CA1416: 验证平台兼容性
+dotnet_diagnostic.CA1416.severity = none

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <AssemblyVersion>1.2.4.0</AssemblyVersion>
     <FileVersion>1.2.4.0</FileVersion>
@@ -21,29 +21,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="1.2.2" />
+    <PackageReference Include="DalamudPackager" Version="2.1.4" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Dalamud">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\Dalamud.dll</HintPath>
+      <HintPath>D:\Games\FFXIV_Utils\Dalamud.Net5\6.0.0.13\Dalamud.dll</HintPath>
       <Private>false</Private>
+      <CopyLocal>False</CopyLocal>
     </Reference>
     <Reference Include="ImGui.NET">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\ImGui.NET.dll</HintPath>
+      <HintPath>D:\Games\FFXIV_Utils\Dalamud.Net5\6.0.0.13\ImGui.NET.dll</HintPath>
       <Private>false</Private>
+      <CopyLocal>False</CopyLocal>
     </Reference>
     <Reference Include="ImGuiScene">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\ImGuiScene.dll</HintPath>
+      <HintPath>D:\Games\FFXIV_Utils\Dalamud.Net5\6.0.0.13\ImGuiScene.dll</HintPath>
       <Private>false</Private>
+      <CopyLocal>False</CopyLocal>
     </Reference>
     <Reference Include="Lumina">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\Lumina.dll</HintPath>
+      <HintPath>D:\Games\FFXIV_Utils\Dalamud.Net5\6.0.0.13\Lumina.dll</HintPath>
       <Private>false</Private>
+      <CopyLocal>False</CopyLocal>
     </Reference>
     <Reference Include="Lumina.Excel">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\Lumina.Excel.dll</HintPath>
+      <HintPath>D:\Games\FFXIV_Utils\Dalamud.Net5\6.0.0.13\Lumina.Excel.dll</HintPath>
       <Private>false</Private>
+      <CopyLocal>False</CopyLocal>
     </Reference>
   </ItemGroup>
 

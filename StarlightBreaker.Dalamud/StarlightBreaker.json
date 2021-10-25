@@ -10,7 +10,7 @@
   "ApplicableVersion": "any",
   "RepoUrl": "https://github.com/PrototypeSeiren/StarlightBreaker",
   // this will be set to 2 automatically
-  "DalamudApiLevel": 3,
+  "DalamudApiLevel": 4,
   // this will be set to 0 automatically
   "LoadPriority": 0
 }
