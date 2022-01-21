@@ -18,31 +18,33 @@ namespace StarlightBreaker
     {
         private Label statusLabel;
         private Process FFXIV;
-        private Patch ChatLogStarPatch;
-        private Patch pfinderStarPatch;
-        private Patch pfinderDialogStarPatch;
+        private Patch StarCheckPatch;
         private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin ffxivPlugin;
         private BackgroundWorker _processSwitcher;
         private ZodiarkProcess Mordion;
-
+        private const string PluginName = "StarlightBreaker";
 
         public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText) {
             statusLabel = pluginStatusText;
-            ffxivPlugin = GetFfxivPlugin();
-
+            pluginScreenSpace.Text = PluginName;
             statusLabel.Text = "Looking for FFXIV...";
+
+            ffxivPlugin = GetFfxivPlugin();
 
             _processSwitcher = new BackgroundWorker { WorkerSupportsCancellation = true };
             _processSwitcher.DoWork += ProcessSwitcher;
             _processSwitcher.RunWorkerAsync();
+            pluginScreenSpace.Hide();
             HideTab();
-        }
+
+         }
 
         public void HideTab() {
-            FormActMain oFormActMain = ActGlobals.oFormActMain;
-            var tcPlugins = (TabControl)typeof(FormActMain).GetField("tcPlugins", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(oFormActMain);
+            var oFormActMain = ActGlobals.oFormActMain;
+            var tcPlugins = (TabControl)typeof(FormActMain).GetField("tcPlugins", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(oFormActMain);
+            if (tcPlugins == null) return;
             foreach (TabPage tab in tcPlugins.TabPages) {
-                if (tab.Text.ToUpper() == "StarlightBreaker.dll".ToUpper())
+                if (string.Equals(tab.Text, PluginName, StringComparison.CurrentCultureIgnoreCase))
                     tcPlugins.TabPages.Remove(tab);
             }
         }
@@ -77,14 +79,8 @@ namespace StarlightBreaker
 
         private void Detach() {
             if (Mordion != null) {
-                if (ChatLogStarPatch != null) {
-                    ChatLogStarPatch.Disable();
-                }
-                if (pfinderStarPatch != null) {
-                    pfinderStarPatch.Disable();
-                }
-                if (pfinderDialogStarPatch != null) {
-                    pfinderDialogStarPatch.Disable();
+                if (StarCheckPatch != null) {
+                    StarCheckPatch.Disable();
                 }
             }
             statusLabel.Text = "反和谐已关闭";
@@ -94,30 +90,24 @@ namespace StarlightBreaker
             try {
                 if (FFXIV.ProcessName == "ffxiv_dx11") {
                     Mordion = new ZodiarkProcess(FFXIV);
-                    var ChatLogSkipAddress = Mordion.Scanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
-                    ChatLogStarPatch = Mordion.SetPatch(ChatLogSkipAddress, new byte?[] { 0xEB });
-                    var pfinderSkipAddress = Mordion.Scanner.ScanText("48 8B D6 E8 ?? ?? ?? ?? 80 BF") + 3;
-                    pfinderStarPatch = Mordion.SetPatch(pfinderSkipAddress, new byte?[] { 0x90, 0x90, 0x90, 0x90, 0x90 });
-                    var pfinderDialogSkipAddress = Mordion.Scanner.ScanText("4C 8B C7 E8 ?? ?? ?? ?? 40 38 B3") + 3;
-                    pfinderDialogStarPatch = Mordion.SetPatch(pfinderDialogSkipAddress, new byte?[] { 0x90, 0x90, 0x90, 0x90, 0x90 });
-
-                    ChatLogStarPatch.Enable();
-                    pfinderStarPatch.Enable();
-                    pfinderDialogStarPatch.Enable();
+                    var starCheck = Mordion.Scanner.ScanText("75 ?? 33 C0 48 8B 5C 24 ?? 48 83 C4 ?? 5F C3 45 39 4C 0B");
+                    //ActGlobals.oFormActMain.WriteDebugLog(starCheck.ToHex().ToString());
+                    StarCheckPatch = Mordion.SetPatch(starCheck, new byte?[] { 0x90,0x90 });
+                    StarCheckPatch.Enable();
                     statusLabel.Text = "反和谐已开启";
 
                 }
                 else {
-                    MessageBox.Show($"2021年了，别用Dx9了", "幹，老兄你的游戏好雞掰怪啊", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var thisYear = new string(DateTime.Now.Year.ToString().ToCharArray().Reverse().ToArray());
+                    MessageBox.Show($"{thisYear}年了，别用Dx9了\n请勿盲目相信登录器设置中的Dx11设置，检查客户端是否工作在Dx11模式时最好使用任务管理器查看进程名是否为ffxiv_dx11.exe确定。\n可以尝试退出游戏后删除sdo\\sdologin\\GamePlugin\\GameSetting.xml，然后重新开启Dx11模式", "幹，老兄你的游戏好雞掰怪啊", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     throw new Exception("不支持FFXIV Dx9");
                 }
             }
             catch (Exception ex) {
-#if SlientMode
-#else
+#if DEBUG
                 MessageBox.Show($"反和谐开启失败！\n{ex.Message}");
 #endif
-                ActGlobals.oFormActMain.WriteExceptionLog(ex, "反和谐异常");
+                ActGlobals.oFormActMain.WriteExceptionLog(ex.Message, "反和谐异常");
 
                 statusLabel.Text = "反和谐开启失败";
             }
