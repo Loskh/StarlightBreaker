@@ -49,13 +49,24 @@ namespace StarlightBreaker
             }
         }
 
-        private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFfxivPlugin() {
+        //private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFfxivPlugin() {
+        //    FFXIV_ACT_Plugin.FFXIV_ACT_Plugin ffxivActPlugin = null;
+        //    foreach (var actPluginData in ActGlobals.oFormActMain.ActPlugins)
+        //        if (actPluginData.pluginFile.Name.ToUpper().Contains("FFXIV_ACT_Plugin".ToUpper()) &&
+        //            actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV Plugin Started.".ToUpper()))
+        //            ffxivActPlugin = (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)actPluginData.pluginObj;
+        //    return ffxivActPlugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于Starlight Breaker之前。");
+        //}
+
+        private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFfxivPlugin()
+        {
             FFXIV_ACT_Plugin.FFXIV_ACT_Plugin ffxivActPlugin = null;
             foreach (var actPluginData in ActGlobals.oFormActMain.ActPlugins)
                 if (actPluginData.pluginFile.Name.ToUpper().Contains("FFXIV_ACT_Plugin".ToUpper()) &&
-                    actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV Plugin Started.".ToUpper()))
+                    (actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV Plugin Started.".ToUpper()) || //国服旧版本
+                     actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV_ACT_Plugin Started.".ToUpper())))  //国际服新版本
                     ffxivActPlugin = (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)actPluginData.pluginObj;
-            return ffxivActPlugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于Starlight Breaker之前。");
+            return ffxivActPlugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于鲶鱼精邮差之前。");
         }
 
         private void ProcessSwitcher(object sender, DoWorkEventArgs e) {
@@ -107,7 +118,7 @@ namespace StarlightBreaker
 #if DEBUG
                 MessageBox.Show($"反和谐开启失败！\n{ex.Message}");
 #endif
-                ActGlobals.oFormActMain.WriteExceptionLog(ex.Message, "反和谐异常");
+                ActGlobals.oFormActMain.WriteExceptionLog(ex, "反和谐异常");
 
                 statusLabel.Text = "反和谐开启失败";
             }
