@@ -29,7 +29,7 @@ namespace StarlightBreaker
             pluginScreenSpace.Text = PluginName;
             statusLabel.Text = "Looking for FFXIV...";
 
-            ffxivPlugin = GetFfxivPlugin();
+            ffxivPlugin = GetFFXIVPlugin();
 
             _processSwitcher = new BackgroundWorker { WorkerSupportsCancellation = true };
             _processSwitcher.DoWork += ProcessSwitcher;
@@ -58,15 +58,10 @@ namespace StarlightBreaker
         //    return ffxivActPlugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于Starlight Breaker之前。");
         //}
 
-        private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFfxivPlugin()
+        private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFFXIVPlugin()
         {
-            FFXIV_ACT_Plugin.FFXIV_ACT_Plugin ffxivActPlugin = null;
-            foreach (var actPluginData in ActGlobals.oFormActMain.ActPlugins)
-                if (actPluginData.pluginFile.Name.ToUpper().Contains("FFXIV_ACT_Plugin".ToUpper()) &&
-                    (actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV Plugin Started.".ToUpper()) || //国服旧版本
-                     actPluginData.lblPluginStatus.Text.ToUpper().Contains("FFXIV_ACT_Plugin Started.".ToUpper())))  //国际服新版本
-                    ffxivActPlugin = (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)actPluginData.pluginObj;
-            return ffxivActPlugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于鲶鱼精邮差之前。");
+            var plugin = ActGlobals.oFormActMain.ActPlugins.FirstOrDefault(x => x.pluginObj?.GetType().ToString() == "FFXIV_ACT_Plugin.FFXIV_ACT_Plugin")?.pluginObj;
+            return (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)plugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于鲶鱼精邮差之前。");
         }
 
         private void ProcessSwitcher(object sender, DoWorkEventArgs e) {
