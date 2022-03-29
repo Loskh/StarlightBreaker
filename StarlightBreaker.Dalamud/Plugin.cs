@@ -85,7 +85,11 @@ namespace StarlightBreaker
             try
             {
                 var g_Framework_2 = this.Scanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
-                unk = Marshal.ReadIntPtr(Marshal.ReadIntPtr(g_Framework_2) + 0x29D8);
+                /*
+                *  .text: 000000014028743C mov     rcx, cs: qword_141E51E58
+                *  .text:0000000140287443          mov rax, [rcx + 2B40h]
+                */
+                unk = Marshal.ReadIntPtr(Marshal.ReadIntPtr(g_Framework_2) + 0x2B40);
 
                 var filterSeStringPtr = this.Scanner.ScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA");
                 FilterSeStringFunc = Marshal.GetDelegateForFunctionPointer<FilterSeStringDelegate>(filterSeStringPtr);
@@ -258,7 +262,7 @@ namespace StarlightBreaker
                 pfinderDialogStarPatch.Dispose();
             }
 
-            this.PluginInterface.Dispose();
+            // this.PluginInterface.Dispose();
         }
 
     }
