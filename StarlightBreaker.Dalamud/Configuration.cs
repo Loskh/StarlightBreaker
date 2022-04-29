@@ -13,9 +13,10 @@ namespace StarlightBreaker
     {
         public int Version { get; set; } = 0;
 
-        public uint Color = 17;
         public bool Enable { get; set; } = true;
-        public bool EnableColorWords { get; set; } = true;
+        public Coloring Coloring = Coloring.All;
+        public uint Color = 17;
+        public bool Italics = true;
         // the below exist just to make saving less cumbersome
 
         [NonSerialized]
