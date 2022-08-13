@@ -218,11 +218,11 @@ namespace StarlightBreaker
                     while (next < str1.Length && str1[next] != str2[next]) {
                         next++;
                     }
-                    //seString.AddUiForeground((ushort)this.Configuration.Color);
+                    seString.AddUiForeground((ushort)this.Configuration.Color);
                     if (this.Configuration.Italics) seString.AddItalicsOn();
                     seString.AddText(str1.Substring(i, next - i));
                     if (this.Configuration.Italics) seString.AddItalicsOff();
-                    //seString.AddUiForegroundOff();
+                    seString.AddUiForegroundOff();
                     i = next;
                 }
                 else {
