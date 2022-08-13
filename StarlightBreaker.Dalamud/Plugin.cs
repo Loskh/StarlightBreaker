@@ -78,18 +78,22 @@ namespace StarlightBreaker
 
             try {
                 // 48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3
-                VulgarInstance = Marshal.ReadIntPtr(Framework.Address.BaseAddress + 0x2B40);
-                VulgarPartyInstance = Marshal.ReadIntPtr(Framework.Address.BaseAddress + 0x2B40 + 0x8);
+                unsafe
+                {
+                    VulgarInstance = Marshal.ReadIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B40);
+                    VulgarPartyInstance = Marshal.ReadIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B40 + 0x8);
+                }
+                
                 SetVulgarStatus(!Configuration.Enable);
 
                 //SignatureHelper.Initialise(this);
                 if (this.Scanner.TryScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA", out var ptr0)) {
-                    this.FilterSeStringHook = new Hook<FilterSeStringDelegate>(ptr0, this.FilterSeStringDetour);
+                    this.FilterSeStringHook = Hook<FilterSeStringDelegate>.FromAddress(ptr0, this.FilterSeStringDetour);
                 }
                 this.FilterSeStringHook?.Enable();
 
                 if (this.Scanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 16 48 8D 15 ?? ?? ?? ??", out var ptr1)) {
-                    this.VulgarCheckHook = new Hook<VulgarCheckDelegate>(ptr1, this.VulgarCheckDetour);
+                    this.VulgarCheckHook = Hook<VulgarCheckDelegate>.FromAddress(ptr1, this.VulgarCheckDetour);
                 }
                 this.VulgarCheckHook?.Enable();
 
@@ -233,15 +237,15 @@ namespace StarlightBreaker
             return seString.Build();
         }
 
-        internal void SetVulgarStatus(bool active)
+        internal unsafe void SetVulgarStatus(bool active)
         {
             if (!active) {
-                Marshal.WriteIntPtr(Framework.Address.BaseAddress + 0x2B40, IntPtr.Zero);
-                Marshal.WriteIntPtr(Framework.Address.BaseAddress + 0x2B48, IntPtr.Zero);
+                Marshal.WriteIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B40, IntPtr.Zero);
+                Marshal.WriteIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B48, IntPtr.Zero);
             }
             else {
-                Marshal.WriteIntPtr(Framework.Address.BaseAddress + 0x2B40, VulgarInstance);
-                Marshal.WriteIntPtr(Framework.Address.BaseAddress + 0x2B48, VulgarPartyInstance);
+                Marshal.WriteIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B40, VulgarInstance);
+                Marshal.WriteIntPtr((IntPtr)FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance() + 0x2B48, VulgarPartyInstance);
             }
 
         }
