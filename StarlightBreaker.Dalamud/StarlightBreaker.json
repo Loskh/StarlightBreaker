@@ -6,6 +6,7 @@
   // this will be set to your assembly's version automatically
   "AssemblyVersion": "1.2.3.0",
   "Description": "Turn off profanity filter.",
+  "Punchline": "Turn off profanity filter.",
   // this will be set to "any" automatically
   "ApplicableVersion": "any",
   "RepoUrl": "https://github.com/PrototypeSeiren/StarlightBreaker",
