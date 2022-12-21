@@ -8,6 +8,7 @@
     <Version>1.2.4</Version>
     <AssemblyName>StarlightBreaker</AssemblyName>
     <RootNamespace>StarlightBreaker</RootNamespace>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
