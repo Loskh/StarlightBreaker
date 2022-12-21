@@ -10,7 +10,7 @@
   "ApplicableVersion": "any",
   "RepoUrl": "https://github.com/Loskh/StarlightBreaker",
   // this will be set to 2 automatically
-  "DalamudApiLevel": 6,
+  "DalamudApiLevel": 7,
   // this will be set to 0 automatically
   "LoadPriority": 0
 }
