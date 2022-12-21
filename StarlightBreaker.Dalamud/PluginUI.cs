@@ -48,9 +48,6 @@ namespace StarlightBreaker
             ImGui.SameLine();
             if (ImGui.RadioButton("ChatLogOnly", Coloring == Coloring.ChatLogOnly))
                 Coloring = Coloring.ChatLogOnly;
-            ImGui.SameLine();
-            if (ImGui.RadioButton("All", Coloring == Coloring.All))
-                Coloring = Coloring.All;
 
             ImGui.Checkbox("Italics", ref Italics);
 
@@ -87,7 +84,6 @@ namespace StarlightBreaker
             this.Plugin.Configuration.Color = Color;
             this.Plugin.Configuration.Italics = Italics;
             this.Plugin.Configuration.Enable = IsEnable;
-            this.Plugin.SetVulgarStatus(!this.IsEnable);
             this.Plugin.Configuration.Coloring = this.Coloring;
             this.Plugin.Configuration.Save();
         }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <AssemblyVersion>1.2.4.0</AssemblyVersion>
     <FileVersion>1.2.4.0</FileVersion>
@@ -12,7 +12,6 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OutputPath>..\bin\StarlightBreaker.Dalamud\Release\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -24,87 +23,42 @@
     <PackageReference Include="DalamudPackager" Version="2.1.7" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
+    <DalamudLibPath>$(DALAMUD_HOME)/</DalamudLibPath>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Dalamud">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\Dalamud.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+    <PackageReference Include="DalamudPackager" Version="2.1.8" />
     <Reference Include="FFXIVClientStructs">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\FFXIVClientStructs.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ImGui.NET">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\ImGui.NET.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ImGuiScene">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\ImGuiScene.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Lumina">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\Lumina.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Lumina.Excel">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\Lumina.Excel.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>D:\Games\FFXIV_Utils\Dalamud\6.3.0.9\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System">
+      <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Core">
+    <Reference Include="Dalamud">
+      <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Data">
+    <Reference Include="ImGui.NET">
+      <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Drawing">
+    <Reference Include="ImGuiScene">
+      <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.IO.Compression.FileSystem">
+    <Reference Include="Lumina">
+      <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Numerics">
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Runtime.Serialization">
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Xml">
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Update="System.Xml.Linq">
+    <Reference Include="Lumina.Excel">
+      <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
