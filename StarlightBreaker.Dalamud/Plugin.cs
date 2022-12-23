@@ -128,7 +128,7 @@ namespace StarlightBreaker {
 
         private unsafe string GetProcessedString(string str) {
             var utf8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.FromString(str);
-            FilterSeStringDetour(this.VulgarInstance, *utf8String);
+            FilterSeStringHook!.Original(this.VulgarInstance, *utf8String);
             return (*utf8String).ToString();
         }
 

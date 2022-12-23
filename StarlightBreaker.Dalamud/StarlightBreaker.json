@@ -4,8 +4,8 @@
   // this will be set to your AssemblyName automatically
   "InternalName": "StarlightBreaker",
   // this will be set to your assembly's version automatically
-  "Description": "Turn off profanity filter.",
-  "Punchline": "Turn off profanity filter.",
+  "Description": "关闭屏蔽词过滤,并特殊显示自己在聊天频道发出的屏蔽词。.",
+  "Punchline": "/slb 打开设置窗口",
   // this will be set to "any" automatically
   "ApplicableVersion": "any",
   "RepoUrl": "https://github.com/Loskh/StarlightBreaker",
