@@ -107,10 +107,24 @@ namespace StarlightBreaker {
             DrawConfigUI();
         }
 
+        private HashSet<XivChatType> ChatWhiteList = new HashSet<XivChatType> {
+            XivChatType.None,
+            XivChatType.Debug,
+            XivChatType.SystemError,
+            XivChatType.SystemMessage,
+            XivChatType.GatheringSystemMessage,
+            XivChatType.ErrorMessage,
+            XivChatType.NPCDialogue,
+            XivChatType.NPCDialogueAnnouncements,
+            XivChatType.RetainerSale};
         private unsafe void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
-            if (!(this.Configuration.Enable && this.Configuration.Coloring == Coloring.ChatLogOnly))
+            if (!this.Configuration.Enable)
                 return;
-            if (sender?.TextValue == this.ClientState.LocalPlayer?.Name.TextValue) {
+            if (ChatWhiteList.Contains(type))
+                return;
+            if (this.Configuration.Coloring == Coloring.ChatLogOnly ||
+                (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue == this.ClientState.LocalPlayer?.Name.TextValue))
+            {
                 var newPayload = new List<Payload>();
                 foreach (var payload in message.Payloads) {
                     if (payload is TextPayload textPayload) {
@@ -203,6 +217,7 @@ namespace StarlightBreaker {
     public enum Coloring {
         None,
         ChatLogOnly,
+        ChatLogOnlyMyself
         //All
     }
 }
