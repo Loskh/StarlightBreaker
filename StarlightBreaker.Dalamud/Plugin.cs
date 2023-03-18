@@ -97,6 +97,7 @@ namespace StarlightBreaker {
         }
 
         private void DrawConfigUI() {
+            this.PluginUi.FilterChannels = this.Configuration.FilterChannels.Distinct().ToList();
             this.PluginUi.IsVisible = true;
         }
 
@@ -107,9 +108,12 @@ namespace StarlightBreaker {
             DrawConfigUI();
         }
 
-        private HashSet<XivChatType> ChatWhiteList = new HashSet<XivChatType> {
+        internal HashSet<XivChatType> ChatPassedList = new HashSet<XivChatType> {
             XivChatType.None,
             XivChatType.Debug,
+            XivChatType.Urgent,
+            XivChatType.Notice,
+            XivChatType.StandardEmote,
             XivChatType.SystemError,
             XivChatType.SystemMessage,
             XivChatType.GatheringSystemMessage,
@@ -120,8 +124,11 @@ namespace StarlightBreaker {
         private unsafe void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
             if (!this.Configuration.Enable)
                 return;
-            if (ChatWhiteList.Contains(type))
+            if (!this.Configuration.FilterChannels.Contains((ushort)type))
+            {
                 return;
+            }
+               
             if (this.Configuration.Coloring == Coloring.ChatLogOnly ||
                 (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue == this.ClientState.LocalPlayer?.Name.TextValue))
             {

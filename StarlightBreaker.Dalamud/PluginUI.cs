@@ -1,7 +1,10 @@
-﻿using ImGuiNET;
+﻿using Dalamud.Game.Text;
+using ImGuiNET;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Num = System.Numerics;
 
 namespace StarlightBreaker
@@ -21,6 +24,8 @@ namespace StarlightBreaker
         private uint Color;
         private bool Italics;
 
+        internal List<ushort> FilterChannels;
+
         public PluginUI(Plugin plugin)
         {
             this.Plugin = plugin;
@@ -36,7 +41,7 @@ namespace StarlightBreaker
             if (!IsVisible)
                 return;
 
-            ImGui.SetNextWindowSize(new Num.Vector2(400, 180));
+            ImGui.SetNextWindowSize(new Num.Vector2(500, 300));
             ImGui.Begin("StarLightBreaker", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize);
 
             ImGui.Checkbox("Enable", ref IsEnable);
@@ -65,6 +70,16 @@ namespace StarlightBreaker
                 showColorPicker = true;
             }
 
+            if (Coloring != Coloring.None)
+            {
+                if (ImGui.Button("Select All"))
+                    SetAllFilterChannels(true);
+                ImGui.SameLine();
+                if (ImGui.Button("Reset"))
+                    SetAllFilterChannels(false);
+                DrawFilters();
+            }
+
             if (ImGui.Button("Save")) {
                 UpdateConfig();
             }
@@ -88,6 +103,7 @@ namespace StarlightBreaker
             this.Plugin.Configuration.Italics = Italics;
             this.Plugin.Configuration.Enable = IsEnable;
             this.Plugin.Configuration.Coloring = this.Coloring;
+            this.Plugin.Configuration.FilterChannels = this.FilterChannels;
             this.Plugin.Configuration.Save();
         }
 
@@ -114,6 +130,50 @@ namespace StarlightBreaker
 
             ImGui.Columns(1);
             ImGui.End();
+        }
+
+        private void DrawFilters()
+        {
+            ImGui.Columns(3, "FiltersTable", true);
+            foreach (ushort chatType in Enum.GetValues(typeof(XivChatType)))
+            {
+                if (this.Plugin.ChatPassedList.Contains((XivChatType)chatType)) continue;
+                string chatTypeName = Enum.GetName(typeof(XivChatType), chatType);
+                bool checkboxClicked = this.FilterChannels.Contains(chatType);
+                if (ImGui.Checkbox(chatTypeName + "##filter", ref checkboxClicked))
+                {
+                    if (checkboxClicked)
+                    {
+                        this.FilterChannels.Add(chatType);
+                    }
+                    else
+                    {
+                        this.FilterChannels.Remove(chatType);
+                    }
+                    this.FilterChannels.Sort();
+                }
+                ImGui.NextColumn();
+            }
+            ImGui.Columns(1);
+        }
+
+        private void SetAllFilterChannels(bool cond)
+        {
+            
+            if (!cond)
+            {
+                this.FilterChannels= new List<ushort>();
+                return;
+            }
+            var tempFilterChannels = new List<ushort>();
+            foreach (ushort chatType in Enum.GetValues(typeof(XivChatType)))
+            {
+                if (this.Plugin.ChatPassedList.Contains((XivChatType)chatType)) continue;
+                tempFilterChannels.Add(chatType);
+
+            }
+            tempFilterChannels.Sort();
+            this.FilterChannels = tempFilterChannels;
         }
 
     }

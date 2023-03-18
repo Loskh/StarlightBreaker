@@ -1,4 +1,5 @@
 ﻿using Dalamud.Configuration;
+using Dalamud.Game.Text;
 using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace StarlightBreaker
         public Coloring Coloring = Coloring.ChatLogOnly;
         public uint Color = 17;
         public bool Italics = false;
+        public List<ushort> FilterChannels = new List<ushort>();
         // the below exist just to make saving less cumbersome
 
         [NonSerialized]
