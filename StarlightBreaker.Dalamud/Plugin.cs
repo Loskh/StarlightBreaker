@@ -108,22 +108,23 @@ namespace StarlightBreaker {
         }
 
         private unsafe void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
-            if (!(this.Configuration.Enable && this.Configuration.Coloring == Coloring.ChatLogOnly))
-                return;
-            if (sender?.TextValue == this.ClientState.LocalPlayer?.Name.TextValue) {
-                var newPayload = new List<Payload>();
-                foreach (var payload in message.Payloads) {
-                    if (payload is TextPayload textPayload) {
-                        var processedStr = GetProcessedString(textPayload.Text);
-                        var newSeString = DiffString(textPayload.Text, processedStr);
-                        newPayload.AddRange(newSeString.Payloads);
-                    }
-                    else
-                        newPayload.Add(payload);
+            if (!this.Configuration.Enable|| this.Configuration.Coloring == Coloring.None) return;
+            if (senderId == 0) return;
+            if (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue != this.ClientState.LocalPlayer?.Name.TextValue) return;
+            var newPayload = new List<Payload>();
+            foreach (var payload in message.Payloads)
+            {
+                if (payload is TextPayload textPayload)
+                {
+                    var processedStr = GetProcessedString(textPayload.Text);
+                    var newSeString = DiffString(textPayload.Text, processedStr);
+                    newPayload.AddRange(newSeString.Payloads);
                 }
-                message.Payloads.Clear();
-                message.Payloads.AddRange(newPayload);
+                else
+                    newPayload.Add(payload);
             }
+            message.Payloads.Clear();
+            message.Payloads.AddRange(newPayload);
         }
 
         private unsafe string GetProcessedString(string str) {
@@ -203,6 +204,7 @@ namespace StarlightBreaker {
     public enum Coloring {
         None,
         ChatLogOnly,
+        ChatLogOnlyMyself, 
         //All
     }
 }
