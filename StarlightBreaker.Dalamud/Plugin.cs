@@ -14,6 +14,7 @@ using Dalamud.Hooking;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Utility;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker {
@@ -109,7 +110,7 @@ namespace StarlightBreaker {
 
         private unsafe void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
             if (!this.Configuration.Enable|| this.Configuration.Coloring == Coloring.None) return;
-            if (senderId == 0) return;
+            if ((sender?.TextValue).IsNullOrWhitespace()) return;
             if (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue != this.ClientState.LocalPlayer?.Name.TextValue) return;
             var newPayload = new List<Payload>();
             foreach (var payload in message.Payloads)
