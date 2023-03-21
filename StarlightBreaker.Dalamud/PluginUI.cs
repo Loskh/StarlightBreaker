@@ -36,7 +36,7 @@ namespace StarlightBreaker
             if (!IsVisible)
                 return;
 
-            ImGui.SetNextWindowSize(new Num.Vector2(320, 180));
+            ImGui.SetNextWindowSize(new Num.Vector2(400, 180));
             ImGui.Begin("StarLightBreaker", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize);
 
             ImGui.Checkbox("Enable", ref IsEnable);
@@ -48,6 +48,9 @@ namespace StarlightBreaker
             ImGui.SameLine();
             if (ImGui.RadioButton("ChatLogOnly", Coloring == Coloring.ChatLogOnly))
                 Coloring = Coloring.ChatLogOnly;
+            ImGui.SameLine();
+            if (ImGui.RadioButton("ChatLogOnlyMyself", Coloring == Coloring.ChatLogOnlyMyself))
+                Coloring = Coloring.ChatLogOnlyMyself;
 
             ImGui.Checkbox("Italics", ref Italics);
 
