@@ -51,7 +51,7 @@ namespace StarlightBreaker {
 
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        public delegate void FilterSeStringDelegate(IntPtr vulgarInstance, FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String);
+        public delegate void FilterSeStringDelegate(IntPtr vulgarInstance, ref FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String);
         private Hook<FilterSeStringDelegate> FilterSeStringHook;
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
@@ -109,9 +109,10 @@ namespace StarlightBreaker {
         }
 
         private unsafe void Chat_OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
-            if (!this.Configuration.Enable|| this.Configuration.Coloring == Coloring.None) return;
+            if (!this.Configuration.Enable|| this.Configuration.Coloring is Coloring.None or Coloring.All) return;
             if ((sender?.TextValue).IsNullOrWhitespace()) return;
             if (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue != this.ClientState.LocalPlayer?.Name.TextValue) return;
+            if (!IsFilterChatType(type)) return;
             var newPayload = new List<Payload>();
             foreach (var payload in message.Payloads)
             {
@@ -128,24 +129,44 @@ namespace StarlightBreaker {
             message.Payloads.AddRange(newPayload);
         }
 
+        private bool IsFilterChatType(XivChatType type)
+        {
+            var typeValue = (ushort)type;
+            return typeValue 
+                is >= 10 and <= 24 
+                or 27 or 30 or 32 or 36 or 37
+                or >=101 and <=107;
+        }
+
         private unsafe string GetProcessedString(string str) {
             var utf8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.FromString(str);
-            FilterSeStringHook!.Original(this.VulgarInstance, *utf8String);
+            FilterSeStringHook!.Original(this.VulgarInstance, ref *utf8String);
             return (*utf8String).ToString();
         }
 
-        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String) {
+        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String) {
             if (vulgarInstance == IntPtr.Zero) {
                 PluginLog.Error($"VulgarInstance is Zero Point!");
                 return;
             }
 
             if (Configuration.Enable)
+            {
+                if (Configuration.Coloring != Coloring.All) return;
+                var originalString = utf8String.ToString();
+                var processedString = GetProcessedString(originalString);
+                var result = DiffString(originalString, processedString);
+                fixed (byte* pointer = result.Encode())
+                {
+                    utf8String.SetString(pointer);
+                }
                 return;
+            }
+                
             PluginLog.Debug($"{utf8String.StringLength}");
             var originString = utf8String.ToString();
             PluginLog.Debug($"Before:{originString}");
-            FilterSeStringHook!.Original(vulgarInstance, utf8String);
+            FilterSeStringHook!.Original(vulgarInstance, ref utf8String);
             PluginLog.Debug($"After:{utf8String}");
         }
 
@@ -206,6 +227,6 @@ namespace StarlightBreaker {
         None,
         ChatLogOnly,
         ChatLogOnlyMyself, 
-        //All
+        All
     }
 }
