@@ -37,22 +37,29 @@ namespace StarlightBreaker
                 return;
 
             ImGui.SetNextWindowSize(new Num.Vector2(350, 220));
-            ImGui.Begin("StarLightBreaker", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize);
+            if (!ImGui.Begin("StarLightBreaker",
+                    ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize))
+            {
+                ImGui.End();
+                return;
+            }
 
             ImGui.Checkbox("Enable", ref IsEnable);
 
             ImGui.Text("Coloring");
             ImGui.SameLine();
-            ImGui.BeginTable("ColoringRadioButton", 2);
-            foreach (Coloring z in Enum.GetValues(typeof(Coloring)))
+            if (ImGui.BeginTable("ColoringRadioButton", 2))
             {
-                ImGui.TableNextColumn();
-                if (ImGui.RadioButton(z.ToString(), this.Coloring == z))
+                foreach (Coloring z in Enum.GetValues(typeof(Coloring)))
                 {
-                    this.Coloring = z;
+                    ImGui.TableNextColumn();
+                    if (ImGui.RadioButton(z.ToString(), this.Coloring == z))
+                    {
+                        this.Coloring = z;
+                    }
                 }
+                ImGui.EndTable();
             }
-            ImGui.EndTable();
 
             ImGui.Checkbox("Italics", ref Italics);
 
