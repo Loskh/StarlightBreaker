@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <LangVersion>9.0</LangVersion>
-    <AssemblyVersion>1.2.8.0</AssemblyVersion>
-    <FileVersion>1.2.8.0</FileVersion>
+    <AssemblyVersion>1.2.8.1</AssemblyVersion>
+    <FileVersion>1.2.8.1</FileVersion>
     <Version>1.2.8</Version>
     <AssemblyName>StarlightBreaker</AssemblyName>
     <RootNamespace>StarlightBreaker</RootNamespace>
