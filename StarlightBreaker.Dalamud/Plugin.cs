@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud.Data;
@@ -14,7 +15,9 @@ using Dalamud.Hooking;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.System.String;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker {
@@ -22,26 +25,25 @@ namespace StarlightBreaker {
         public string Name => "StarlightBreaker";
 
         [PluginService]
-        [RequiredVersion("1.0")]
         private DalamudPluginInterface PluginInterface { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        private SigScanner Scanner { get; set; }
+        private ISigScanner Scanner { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        private CommandManager CommandManager { get; set; }
+        private ICommandManager CommandManager { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        private ClientState ClientState { get; set; }
+        private IClientState ClientState { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        private ChatGui ChatGui { get; set; }
+        private IChatGui ChatGui { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        internal DataManager DataManager { get; set; }
+        internal IDataManager DataManager { get; set; }
         [PluginService]
-        [RequiredVersion("1.0")]
-        internal Framework Framework { get; set; }
+        internal IFramework Framework { get; set; }
+
+        [PluginService]
+        internal IGameInteropProvider GameInteropProvider { get; set; }
+
+        [PluginService]
+        internal IPluginLog PluginLog { get; set; }
 
         private PluginUI PluginUi { get; set; }
         internal Configuration Configuration { get; set; }
@@ -59,6 +61,7 @@ namespace StarlightBreaker {
         private Hook<VulgarCheckDelegate> VulgarCheckHook;
 
         public Plugin() {
+
             this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(this.PluginInterface);
             this.PluginUi = new PluginUI(this);
@@ -68,16 +71,20 @@ namespace StarlightBreaker {
 
             try {
                 // 48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3
-                VulgarInstance = Marshal.ReadIntPtr(Framework.Address.BaseAddress + 0x2B40);
-                VulgarPartyInstance = Marshal.ReadIntPtr(Framework.Address.BaseAddress + 0x2B40 + 0x8);
-
+                var frameworkPtr = Marshal.ReadIntPtr(Scanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3"));
+                VulgarInstance = Marshal.ReadIntPtr( frameworkPtr + 0x2B40);
+                VulgarPartyInstance = VulgarInstance + 0x8;
+#if DEBUG
+                PluginLog.Debug($"{frameworkPtr - Process.GetCurrentProcess().MainModule.BaseAddress:X}");
+                //PluginLog.Debug($"{VulgarPartyInstance:X}");
+#endif
                 if (this.Scanner.TryScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA", out var ptr0)) {
-                    this.FilterSeStringHook = new Hook<FilterSeStringDelegate>(ptr0, this.FilterSeStringDetour);
+                    this.FilterSeStringHook = GameInteropProvider.HookFromAddress<FilterSeStringDelegate>(ptr0, this.FilterSeStringDetour);
                 }
                 this.FilterSeStringHook?.Enable();
 
                 if (this.Scanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 16 48 8D 15 ?? ?? ?? ??", out var ptr1)) {
-                    this.VulgarCheckHook = new Hook<VulgarCheckDelegate>(ptr1, this.VulgarCheckDetour);
+                    this.VulgarCheckHook = GameInteropProvider.HookFromAddress<VulgarCheckDelegate>(ptr1, this.VulgarCheckDetour);
                 }
                 this.VulgarCheckHook?.Enable();
 

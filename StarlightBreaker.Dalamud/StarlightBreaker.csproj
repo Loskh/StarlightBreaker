@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net7.0-windows</TargetFramework>
     <LangVersion>9.0</LangVersion>
-    <AssemblyVersion>1.2.8.1</AssemblyVersion>
-    <FileVersion>1.2.8.1</FileVersion>
+    <AssemblyVersion>1.2.8.2</AssemblyVersion>
+    <FileVersion>1.2.8.2</FileVersion>
     <Version>1.2.8</Version>
     <AssemblyName>StarlightBreaker</AssemblyName>
     <RootNamespace>StarlightBreaker</RootNamespace>
@@ -35,7 +35,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.8" />
+    <PackageReference Include="DalamudPackager" Version="2.1.12" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
