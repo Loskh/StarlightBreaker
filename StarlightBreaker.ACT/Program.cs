@@ -96,9 +96,9 @@ namespace StarlightBreaker
             try {
                 if (FFXIV.ProcessName == "ffxiv_dx11") {
                     Mordion = new ZodiarkProcess(FFXIV);
-                    var starCheck = Mordion.Scanner.ScanText("75 ?? 33 C0 48 8B 5C 24 ?? 48 83 C4 ?? 5F C3 45 39 4C 0B");
+                    var starCheck = Mordion.Scanner.ScanText("85 C9 0F 84 ?? ?? ?? ?? 41 83 7C 0B");
                     //ActGlobals.oFormActMain.WriteDebugLog(starCheck.ToHex().ToString());
-                    StarCheckPatch = Mordion.SetPatch(starCheck, new byte?[] { 0x90,0x90 });
+                    StarCheckPatch = Mordion.SetPatch(starCheck, new byte?[] { 0x31 });
                     StarCheckPatch.Enable();
                     statusLabel.Text = "反和谐已开启";
 
