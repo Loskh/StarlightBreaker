@@ -1,4 +1,5 @@
-﻿using ImGuiNET;
+﻿using Dalamud.Interface.Windowing;
+using ImGuiNET;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -6,14 +7,13 @@ using Num = System.Numerics;
 
 namespace StarlightBreaker
 {
-    class PluginUI
+    public class ConfigWindow : Window, IDisposable
     {
         private Plugin Plugin;
         private ExcelSheet<UIColor> uiColours;
 
         private uint ButtonColor;
         private bool showColorPicker = false;
-        public bool IsVisible = false;
 
 
         private bool IsEnable;
@@ -21,28 +21,22 @@ namespace StarlightBreaker
         private uint Color;
         private bool Italics;
 
-        public PluginUI(Plugin plugin)
+        private Configuration Configuration;
+
+        public ConfigWindow(Plugin plugin):base(Plugin.Name)
         {
+            Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize;
+            Size = new Num.Vector2(400, 220);
             this.Plugin = plugin;
-            this.uiColours = plugin.DataManager.Excel.GetSheet<UIColor>();
+            this.uiColours = Plugin.DataManager.Excel.GetSheet<UIColor>();
             this.IsEnable = plugin.Configuration.Enable;
             this.Italics=plugin.Configuration.Italics;
             this.Color=plugin.Configuration.Color;
             this.Coloring = plugin.Configuration.Coloring;
             ButtonColor = uiColours.GetRow(this.Color).UIForeground;
         }
-        public void Draw()
+        public override void Draw()
         {
-            if (!IsVisible)
-                return;
-
-            ImGui.SetNextWindowSize(new Num.Vector2(350, 220));
-            if (!ImGui.Begin("StarLightBreaker",
-                    ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize))
-            {
-                ImGui.End();
-                return;
-            }
 
             ImGui.Checkbox("Enable", ref IsEnable);
 
@@ -79,16 +73,9 @@ namespace StarlightBreaker
             }
             ImGui.SameLine();
 
-            if (ImGui.Button("Save&Close")) {
-                UpdateConfig();
-                this.IsVisible = false;
-            }
-
-            ImGui.End();
             if (showColorPicker) {
                 ShowColorPicker();
             }
-            return;
         }
 
         private void UpdateConfig()
@@ -124,6 +111,8 @@ namespace StarlightBreaker
             ImGui.Columns(1);
             ImGui.End();
         }
+
+        public void Dispose() { }
 
     }
 }

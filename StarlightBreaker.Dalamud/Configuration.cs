@@ -1,10 +1,5 @@
 ﻿using Dalamud.Configuration;
-using Dalamud.Plugin;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StarlightBreaker
 {
@@ -19,17 +14,9 @@ namespace StarlightBreaker
         public bool Italics = false;
         // the below exist just to make saving less cumbersome
 
-        [NonSerialized]
-        private DalamudPluginInterface pluginInterface;
-
-        public void Initialize(DalamudPluginInterface pluginInterface)
-        {
-            this.pluginInterface = pluginInterface;
-        }
-
         public void Save()
         {
-            this.pluginInterface.SavePluginConfig(this);
+            Plugin.PluginInterface.SavePluginConfig(this);
         }
     }
 }
