@@ -4,13 +4,13 @@
   // this will be set to your AssemblyName automatically
   "InternalName": "StarlightBreaker",
   // this will be set to your assembly's version automatically
-  "Description": "关闭屏蔽词过滤,并特殊显示自己在聊天频道发出的屏蔽词。.",
+  "Description": "关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词",
   "Punchline": "/slb 打开设置窗口",
   // this will be set to "any" automatically
   "ApplicableVersion": "any",
   "RepoUrl": "https://github.com/Loskh/StarlightBreaker",
   // this will be set to 2 automatically
-  "DalamudApiLevel": 9,
+  "DalamudApiLevel": 10,
   // this will be set to 0 automatically
   "LoadPriority": 0
 }
