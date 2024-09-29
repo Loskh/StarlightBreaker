@@ -146,11 +146,11 @@ namespace StarlightBreaker {
                 or >=101 and <=107;
         }
 
-        private unsafe string GetProcessedString(string str) {
-            var utf8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.FromString(str);
-            //FilterSeStringHook!.Original(this.VulgarInstance, ref *utf8String);
-            FilterSeStringDetour(this.VulgarInstance, ref *utf8String);
-            return (*utf8String).ToString();
+        private unsafe string GetProcessedString(string str)
+        {
+            Utf8String utf8String = *Utf8String.FromString(str);
+            FilterSeStringHook!.OriginalDisposeSafe(this.VulgarInstance, ref utf8String);
+            return utf8String.ToString();
         }
 
         private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String) {
