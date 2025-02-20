@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows7.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
-    <AssemblyVersion>1.2.9.0</AssemblyVersion>
+    <AssemblyVersion>1.2.10.0</AssemblyVersion>
     <FileVersion>1.2.8.2</FileVersion>
-    <Version>1.2.9</Version>
+    <Version>1.2.10</Version>
     <AssemblyName>StarlightBreaker</AssemblyName>
     <RootNamespace>StarlightBreaker</RootNamespace>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
@@ -22,12 +22,8 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.7" />
-  </ItemGroup>
-
   <PropertyGroup>
-    <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+    <DalamudLibPath>$(appdata)\XIVLauncherCN\addon\Hooks\dev\</DalamudLibPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
@@ -35,7 +31,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.13" />
+    <PackageReference Include="DalamudPackager" Version="11.0.0" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
