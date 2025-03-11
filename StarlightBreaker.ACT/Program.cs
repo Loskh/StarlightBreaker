@@ -18,7 +18,8 @@ namespace StarlightBreaker
     {
         private Label statusLabel;
         private Process FFXIV;
-        private Patch StarCheckPatch;
+        //private Patch StarCheckPatch;
+        private Patch ChatLogStarPatch;
         private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin ffxivPlugin;
         private BackgroundWorker _processSwitcher;
         private ZodiarkProcess Mordion;
@@ -61,7 +62,7 @@ namespace StarlightBreaker
         private FFXIV_ACT_Plugin.FFXIV_ACT_Plugin GetFFXIVPlugin()
         {
             var plugin = ActGlobals.oFormActMain.ActPlugins.FirstOrDefault(x => x.pluginObj?.GetType().ToString() == "FFXIV_ACT_Plugin.FFXIV_ACT_Plugin")?.pluginObj;
-            return (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)plugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于鲶鱼精邮差之前。");
+            return (FFXIV_ACT_Plugin.FFXIV_ACT_Plugin)plugin ?? throw new Exception("找不到FFXIV解析插件，请确保其加载顺序位于StarlightBreaker之前。");
         }
 
         private void ProcessSwitcher(object sender, DoWorkEventArgs e) {
@@ -85,8 +86,8 @@ namespace StarlightBreaker
 
         private void Detach() {
             if (Mordion != null) {
-                if (StarCheckPatch != null) {
-                    StarCheckPatch.Disable();
+                if (ChatLogStarPatch != null) {
+                    ChatLogStarPatch.Disable();
                 }
             }
             statusLabel.Text = "反和谐已关闭";
@@ -96,10 +97,18 @@ namespace StarlightBreaker
             try {
                 if (FFXIV.ProcessName == "ffxiv_dx11") {
                     Mordion = new ZodiarkProcess(FFXIV);
+                    /*
+                     * 一闪一闪亮晶晶
+                     * 招募全是小星星
+                     * 
                     var starCheck = Mordion.Scanner.ScanText("85 C9 0F 84 ?? ?? ?? ?? 41 83 7C 0B");
                     //ActGlobals.oFormActMain.WriteDebugLog(starCheck.ToHex().ToString());
                     StarCheckPatch = Mordion.SetPatch(starCheck, new byte?[] { 0x31 });
                     StarCheckPatch.Enable();
+                    */
+                    var ChatLogSkipAddress = Mordion.Scanner.ScanText("74 ?? 48 8B D3 E8 ?? ?? ?? ?? 48 8B C3");
+                    ChatLogStarPatch = Mordion.SetPatch(ChatLogSkipAddress, new byte?[] { 0xEB });
+                    ChatLogStarPatch.Enable();
                     statusLabel.Text = "反和谐已开启";
 
                 }
