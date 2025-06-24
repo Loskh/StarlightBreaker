@@ -165,9 +165,11 @@ namespace StarlightBreaker {
                 var originalString = utf8String.ToString();
                 var processedString = GetProcessedString(originalString);
                 var result = DiffString(originalString, processedString);
-                fixed (byte* pointer = result.Encode())
+                var bytes = result.Encode();
+                fixed (byte* pointer = bytes)
                 {
-                    utf8String.SetString(pointer);
+                    //utf8String.SetString(pointer);
+                    utf8String.Ctor_FromSequence(pointer, (nuint)bytes.Length);
                 }
                 return;
             }

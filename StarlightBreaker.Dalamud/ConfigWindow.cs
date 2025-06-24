@@ -33,7 +33,7 @@ namespace StarlightBreaker
             this.Italics=plugin.Configuration.Italics;
             this.Color=plugin.Configuration.Color;
             this.Coloring = plugin.Configuration.Coloring;
-            ButtonColor = uiColours.GetRow(this.Color).UIForeground;
+            ButtonColor = uiColours.GetRow(this.Color).Dark;
         }
         public override void Draw()
         {
@@ -94,14 +94,14 @@ namespace StarlightBreaker
             ImGui.Begin("UIColor Picker", ref showColorPicker, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav| ImGuiWindowFlags.NoResize);
             ImGui.Columns(10, "##columnsID", false);
             foreach (var z in uiColours) {
-                var temp = BitConverter.GetBytes(z.UIForeground);
-                if (ImGui.ColorButton(z.RowId.ToString(), new Num.Vector4(
+                var temp = BitConverter.GetBytes(z.Dark);
+                if (ImGui.ColorButton(z.Dark.ToString(), new Num.Vector4(
                     (float)temp[3] / 255,
                     (float)temp[2] / 255,
                     (float)temp[1] / 255,
                     (float)temp[0] / 255))) {
-                    this.ButtonColor = z.UIForeground;
-                    this.Color = z.RowId;
+                    this.ButtonColor = z.Dark;
+                    this.Color = z.Dark;
                     showColorPicker = false;
                 }
 
