@@ -1,24 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
+﻿using Dalamud.Game;
 using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using InteropGenerator.Runtime;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker {
@@ -153,7 +148,7 @@ namespace StarlightBreaker {
             return utf8String.ToString();
         }
 
-        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref FFXIVClientStructs.FFXIV.Client.System.String.Utf8String utf8String) {
+        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref Utf8String utf8String) {
             if (vulgarInstance == IntPtr.Zero) {
                 PluginLog.Error($"VulgarInstance is Zero Point!");
                 return;
@@ -168,17 +163,10 @@ namespace StarlightBreaker {
                 var bytes = result.Encode();
                 fixed (byte* pointer = bytes)
                 {
-                    //utf8String.SetString(pointer);
-                    utf8String.Ctor_FromSequence(pointer, (nuint)bytes.Length);
+                    utf8String.SetString((CStringPointer)pointer);
                 }
                 return;
             }
-            PluginLog.Debug($"{vulgarInstance:X}");
-            PluginLog.Debug($"{utf8String.StringLength}");
-            var originString = utf8String.ToString();
-            PluginLog.Debug($"Before:{originString}");
-            FilterSeStringHook!.Original(vulgarInstance, ref utf8String);
-            PluginLog.Debug($"After:{utf8String}");
         }
 
         private bool VulgarCheckDetour(IntPtr vulgarInstance, UTF8String utf8String) {
