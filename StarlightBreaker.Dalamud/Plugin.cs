@@ -16,9 +16,11 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
-namespace StarlightBreaker {
-    public class Plugin : IDalamudPlugin {
-        public const string Name ="StarlightBreaker";
+namespace StarlightBreaker
+{
+    public class Plugin : IDalamudPlugin
+    {
+        public const string Name = "StarlightBreaker";
         private const string CommandName = "/slb";
 
         [PluginService]
@@ -58,7 +60,8 @@ namespace StarlightBreaker {
         public delegate bool VulgarCheckDelegate(IntPtr vulgarInstance, Utf8String utf8String);
         private Hook<VulgarCheckDelegate> VulgarCheckHook;
 
-        public Plugin() {
+        public Plugin()
+        {
 
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             ConfigWindow = new ConfigWindow(this);
@@ -72,22 +75,25 @@ namespace StarlightBreaker {
                 HelpMessage = "Open Config Window for StarlightBreaker"
             });
 
-            try {
+            try
+            {
                 // 48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3
                 var frameworkPtr = Marshal.ReadIntPtr(Scanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3"));
-                VulgarInstance = Marshal.ReadIntPtr( frameworkPtr + 0x2B48);
+                VulgarInstance = Marshal.ReadIntPtr(frameworkPtr + 0x2B48);
                 VulgarPartyInstance = VulgarInstance + 0x8;
 #if DEBUG
                 //PluginLog.Debug($"{frameworkPtr - Process.GetCurrentProcess().MainModule.BaseAddress:X}");
                 PluginLog.Debug($"VulgarInstance:{VulgarInstance:X}");
 #endif
-                if (Scanner.TryScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA", out var ptr0)) {
+                if (Scanner.TryScanText("E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 ?? 5B C3 ?? ?? ?? ?? ?? ?? ?? 48 83 EC ?? 48 8B CA", out var ptr0))
+                {
                     this.FilterSeStringHook = GameInteropProvider.HookFromAddress<FilterSeStringDelegate>(ptr0, this.FilterSeStringDetour);
                 }
                 PluginLog.Debug($"FilterSeString:{ptr0:X}");
                 this.FilterSeStringHook?.Enable();
 
-                if (Scanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 16 48 8D 15 ?? ?? ?? ??", out var ptr1)) {
+                if (Scanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 16 48 8D 15 ?? ?? ?? ??", out var ptr1))
+                {
                     this.VulgarCheckHook = GameInteropProvider.HookFromAddress<VulgarCheckDelegate>(ptr1, this.VulgarCheckDetour);
                 }
                 PluginLog.Debug($"VulgarCheck:{ptr1:X}");
@@ -95,7 +101,8 @@ namespace StarlightBreaker {
 
                 ChatGui.ChatMessage += Chat_OnChatMessage;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 PluginLog.Error(ex, "开启屏蔽词染色失败", Array.Empty<object>());
             }
 
@@ -103,15 +110,17 @@ namespace StarlightBreaker {
         private void DrawUI() => WindowSystem.Draw();
         public void ToggleConfigUI() => ConfigWindow.Toggle();
 
-        private void OnCommand(string command, string arguments) {
+        private void OnCommand(string command, string arguments)
+        {
 #if DEBUG
             PluginLog.Info(GetProcessedString(arguments));
 #endif
             ToggleConfigUI();
         }
 
-        private unsafe void Chat_OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
-            if (!this.Configuration.Enable|| this.Configuration.Coloring is Coloring.None or Coloring.All) return;
+        private unsafe void Chat_OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+        {
+            if (!this.Configuration.Enable || this.Configuration.Coloring is Coloring.None or Coloring.All) return;
             if ((sender?.TextValue).IsNullOrWhitespace()) return;
             if (this.Configuration.Coloring == Coloring.ChatLogOnlyMyself && sender?.TextValue != ClientState.LocalPlayer?.Name.TextValue) return;
             if (!IsFilterChatType(type)) return;
@@ -135,10 +144,10 @@ namespace StarlightBreaker {
         private bool IsFilterChatType(XivChatType type)
         {
             var typeValue = (ushort)type;
-            return typeValue 
-                is >= 10 and <= 24 
+            return typeValue
+                is >= 10 and <= 24
                 or 27 or 30 or 32 or 36 or 37
-                or >=101 and <=107;
+                or >= 101 and <= 107;
         }
 
         private unsafe string GetProcessedString(string str)
@@ -148,8 +157,10 @@ namespace StarlightBreaker {
             return utf8String.ToString();
         }
 
-        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref Utf8String utf8String) {
-            if (vulgarInstance == IntPtr.Zero) {
+        private unsafe void FilterSeStringDetour(IntPtr vulgarInstance, ref Utf8String utf8String)
+        {
+            if (vulgarInstance == IntPtr.Zero)
+            {
                 PluginLog.Error($"VulgarInstance is Zero Point!");
                 return;
             }
@@ -169,13 +180,17 @@ namespace StarlightBreaker {
             }
         }
 
-        private bool VulgarCheckDetour(IntPtr vulgarInstance, UTF8String utf8String) {
+        private bool VulgarCheckDetour(IntPtr vulgarInstance, UTF8String utf8String)
+        {
             //Party Finder Check
-            if (Configuration.Enable) {
+            if (Configuration.Enable)
+            {
                 return false;
             }
-            else {
-                if (vulgarInstance == IntPtr.Zero) {
+            else
+            {
+                if (vulgarInstance == IntPtr.Zero)
+                {
                     PluginLog.Error($"VulgarInstance is Zero Point!");
                     return false;
                 }
@@ -183,14 +198,18 @@ namespace StarlightBreaker {
             }
         }
 
-        private SeString DiffString(string str1, string str2) {
+        private SeString DiffString(string str1, string str2)
+        {
             var seString = new SeStringBuilder();
             var i = 0;
             var length = Math.Min(str1.Length, str2.Length);
-            while (i < length) {
-                if (str1[i] != str2[i]) {
+            while (i < length)
+            {
+                if (str1[i] != str2[i])
+                {
                     var next = i;
-                    while (next < str1.Length && str1[next] != str2[next]) {
+                    while (next < str1.Length && str1[next] != str2[next])
+                    {
                         next++;
                     }
                     seString.AddUiForeground((ushort)this.Configuration.Color);
@@ -200,9 +219,11 @@ namespace StarlightBreaker {
                     seString.AddUiForegroundOff();
                     i = next;
                 }
-                else {
+                else
+                {
                     var next = i;
-                    while (next < str1.Length && str1[next] == str2[next]) {
+                    while (next < str1.Length && str1[next] == str2[next])
+                    {
                         next++;
                     }
                     seString.AddText(str1.Substring(i, next - i));
@@ -212,7 +233,8 @@ namespace StarlightBreaker {
             return seString.Build();
         }
 
-        public void Dispose() {
+        public void Dispose()
+        {
             this.FilterSeStringHook?.Dispose();
             this.VulgarCheckHook?.Dispose();
 
@@ -225,10 +247,11 @@ namespace StarlightBreaker {
         }
     }
 
-    public enum Coloring {
+    public enum Coloring
+    {
         None,
         ChatLogOnly,
-        ChatLogOnlyMyself, 
+        ChatLogOnlyMyself,
         All
     }
 }

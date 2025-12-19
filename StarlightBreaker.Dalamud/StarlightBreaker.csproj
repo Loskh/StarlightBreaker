@@ -1,17 +1,13 @@
-﻿<Project Sdk="Dalamud.NET.Sdk/13.0.0">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/14.0.1">
 	<PropertyGroup>
-		<Version>1.13.2</Version>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-	</PropertyGroup>
-
-	<ItemGroup>
-	  <Content Include="StarlightBreaker.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="DalamudPackager" Version="13.1.0" />
-	</ItemGroup>
+		<Name>StarlightBreaker</Name>
+		<Version>1.14.0</Version>
+		<Author>Loskh</Author>
+		<Punchline>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Punchline>
+		<Description>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Description>
+		<PackageProjectUrl>https://github.com/Loskh/StarlightBreakerv</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<IsPackable>false</IsPackable>
+  </PropertyGroup>
 </Project>

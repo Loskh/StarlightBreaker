@@ -1,5 +1,5 @@
-﻿using Dalamud.Interface.Windowing;
-using Dalamud.Bindings.ImGui;
+﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Windowing;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System;
@@ -23,15 +23,15 @@ namespace StarlightBreaker
 
         private Configuration Configuration;
 
-        public ConfigWindow(Plugin plugin):base(Plugin.Name)
+        public ConfigWindow(Plugin plugin) : base(Plugin.Name)
         {
             Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize;
             Size = new Num.Vector2(400, 220);
             this.Plugin = plugin;
             this.uiColours = Plugin.DataManager.Excel.GetSheet<UIColor>();
             this.IsEnable = plugin.Configuration.Enable;
-            this.Italics=plugin.Configuration.Italics;
-            this.Color=plugin.Configuration.Color;
+            this.Italics = plugin.Configuration.Italics;
+            this.Color = plugin.Configuration.Color;
             this.Coloring = plugin.Configuration.Coloring;
             ButtonColor = uiColours.GetRow(this.Color).Dark;
         }
@@ -64,16 +64,19 @@ namespace StarlightBreaker
                 (float)temp[3] / 255,
                 (float)temp[2] / 255,
                 (float)temp[1] / 255,
-                (float)temp[0] / 255))) {
+                (float)temp[0] / 255)))
+            {
                 showColorPicker = true;
             }
 
-            if (ImGui.Button("Save")) {
+            if (ImGui.Button("Save"))
+            {
                 UpdateConfig();
             }
             ImGui.SameLine();
 
-            if (showColorPicker) {
+            if (showColorPicker)
+            {
                 ShowColorPicker();
             }
         }
@@ -91,15 +94,17 @@ namespace StarlightBreaker
         {
             //ImGui.SetNextWindowSizeConstraints(new Num.Vector2(320, 440), new Num.Vector2(640, 880));
             ImGui.SetNextWindowSize(new Num.Vector2(320, 500));
-            ImGui.Begin("UIColor Picker", ref showColorPicker, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav| ImGuiWindowFlags.NoResize);
+            ImGui.Begin("UIColor Picker", ref showColorPicker, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize);
             ImGui.Columns(10, "##columnsID", false);
-            foreach (var z in uiColours) {
+            foreach (var z in uiColours)
+            {
                 var temp = BitConverter.GetBytes(z.Dark);
                 if (ImGui.ColorButton(z.Dark.ToString(), new Num.Vector4(
                     (float)temp[3] / 255,
                     (float)temp[2] / 255,
                     (float)temp[1] / 255,
-                    (float)temp[0] / 255))) {
+                    (float)temp[0] / 255)))
+                {
                     this.ButtonColor = z.Dark;
                     this.Color = z.Dark;
                     showColorPicker = false;
