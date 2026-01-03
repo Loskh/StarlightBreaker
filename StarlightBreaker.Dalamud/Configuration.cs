@@ -4,15 +4,34 @@ using System;
 namespace StarlightBreaker
 {
     [Serializable]
+
+    public class ChatLogConfig
+    {
+        public bool Enable = true;
+        public bool EnableColor = false;
+    }
+    [Serializable]
+    public class PartyFinderConfig
+    {
+        public bool Enable = true;
+        public bool EnableColor = false;
+    }
+    [Serializable]
+    public class FontConfig
+    {
+        public ushort Color = 17;
+        public bool Italics = false;
+        public bool EnableColor = false;
+    }
+    [Serializable]
     public class Configuration : IPluginConfiguration
     {
-        public int Version { get; set; } = 0;
+        public int Version { get; set; } = 1;
 
-        public bool Enable { get; set; } = true;
-        public Coloring Coloring = Coloring.ChatLogOnly;
-        public uint Color = 17;
-        public bool Italics = false;
-        // the below exist just to make saving less cumbersome
+        public ChatLogConfig ChatLogConfig { get; set; } = new();
+        public PartyFinderConfig PartyFinderConfig { get; set; } = new();
+        public FontConfig FontConfig { get; set; } = new();
+
 
         public void Save()
         {

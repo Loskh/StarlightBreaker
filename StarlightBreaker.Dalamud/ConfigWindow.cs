@@ -1,4 +1,5 @@
 ﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -10,111 +11,63 @@ namespace StarlightBreaker
     public class ConfigWindow : Window, IDisposable
     {
         private Plugin Plugin;
-        private ExcelSheet<UIColor> uiColours;
 
-        private uint ButtonColor;
-        private bool showColorPicker = false;
+        private Configuration config;
 
+        internal bool ShowUpdateTips = false;
 
-        private bool IsEnable;
-        private Coloring Coloring;
-        private uint Color;
-        private bool Italics;
-
-        private Configuration Configuration;
-
-        public ConfigWindow(Plugin plugin) : base(Plugin.Name)
+        public ConfigWindow(Plugin plugin) : base(Plugin.Name, ImGuiWindowFlags.NoResize)
         {
-            Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize;
-            Size = new Num.Vector2(400, 220);
+            //Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize;
+            Size = new Num.Vector2(400, 300);
             this.Plugin = plugin;
-            this.uiColours = Plugin.DataManager.Excel.GetSheet<UIColor>();
-            this.IsEnable = plugin.Configuration.Enable;
-            this.Italics = plugin.Configuration.Italics;
-            this.Color = plugin.Configuration.Color;
-            this.Coloring = plugin.Configuration.Coloring;
-            ButtonColor = uiColours.GetRow(this.Color).Dark;
+            this.config = this.Plugin.Configuration;
         }
         public override void Draw()
         {
-
-            ImGui.Checkbox("Enable", ref IsEnable);
-
-            ImGui.Text("Coloring");
-            ImGui.SameLine();
-            if (ImGui.BeginTable("ColoringRadioButton", 2))
+            if (this.ShowUpdateTips)
             {
-                foreach (Coloring z in Enum.GetValues(typeof(Coloring)))
+                ImGui.Text("由于版本更新，旧设置失效，请重新设置。");
+                ImGui.Text("新版本已解决未开反屏蔽的玩家会看到空白招募的问题");
+                ImGui.Text("当系统提示处理招募失败时，请检查招募文本的词语");
+            }
+            var needSave = false;
+            if (ImGui.CollapsingHeader("聊天栏设置", ImGuiTreeNodeFlags.DefaultOpen))
+            {
+                using (ImRaii.Group())
                 {
-                    ImGui.TableNextColumn();
-                    if (ImGui.RadioButton(z.ToString(), this.Coloring == z))
-                    {
-                        this.Coloring = z;
-                    }
+                    needSave |= ImGui.Checkbox("启用##Chat", ref this.config.ChatLogConfig.Enable);
+                    needSave |= ImGui.Checkbox("特殊显示##Chat", ref this.config.ChatLogConfig.EnableColor);
                 }
-                ImGui.EndTable();
             }
 
-            ImGui.Checkbox("Italics", ref Italics);
-
-            ImGui.Text("Color For Profanitay Words");
-            ImGui.SameLine();
-            var temp = BitConverter.GetBytes(ButtonColor);
-            if (ImGui.ColorButton("Choose Color", new Num.Vector4(
-                (float)temp[3] / 255,
-                (float)temp[2] / 255,
-                (float)temp[1] / 255,
-                (float)temp[0] / 255)))
+            if (ImGui.CollapsingHeader("招募板设置", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                showColorPicker = true;
-            }
-
-            if (ImGui.Button("Save"))
-            {
-                UpdateConfig();
-            }
-            ImGui.SameLine();
-
-            if (showColorPicker)
-            {
-                ShowColorPicker();
-            }
-        }
-
-        private void UpdateConfig()
-        {
-            this.Plugin.Configuration.Color = Color;
-            this.Plugin.Configuration.Italics = Italics;
-            this.Plugin.Configuration.Enable = IsEnable;
-            this.Plugin.Configuration.Coloring = this.Coloring;
-            this.Plugin.Configuration.Save();
-        }
-
-        private void ShowColorPicker()
-        {
-            //ImGui.SetNextWindowSizeConstraints(new Num.Vector2(320, 440), new Num.Vector2(640, 880));
-            ImGui.SetNextWindowSize(new Num.Vector2(320, 500));
-            ImGui.Begin("UIColor Picker", ref showColorPicker, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoResize);
-            ImGui.Columns(10, "##columnsID", false);
-            foreach (var z in uiColours)
-            {
-                var temp = BitConverter.GetBytes(z.Dark);
-                if (ImGui.ColorButton(z.Dark.ToString(), new Num.Vector4(
-                    (float)temp[3] / 255,
-                    (float)temp[2] / 255,
-                    (float)temp[1] / 255,
-                    (float)temp[0] / 255)))
+                using (ImRaii.Group())
                 {
-                    this.ButtonColor = z.Dark;
-                    this.Color = z.Dark;
-                    showColorPicker = false;
+                    needSave |= ImGui.Checkbox("启用##PartyFinder", ref this.config.PartyFinderConfig.Enable);
+                    needSave |= ImGui.Checkbox("特殊显示##PartyFinder", ref this.config.PartyFinderConfig.EnableColor);
                 }
-
-                ImGui.NextColumn();
             }
 
-            ImGui.Columns(1);
-            ImGui.End();
+            var temp = BitConverter.GetBytes(this.config.FontConfig.Color);
+            if (ImGui.CollapsingHeader("特殊显示设置", ImGuiTreeNodeFlags.DefaultOpen))
+            {
+                using (ImRaii.Group())
+                {
+                    needSave |= ImGui.Checkbox("斜体", ref this.config.FontConfig.Italics);
+                    needSave |= ImGui.Checkbox("颜色", ref this.config.FontConfig.EnableColor);
+                    needSave |= ImGuiExt.UiColorPicker($"##picker_default", ref this.config.FontConfig.Color);
+                    ImGui.SameLine();
+                    ImGui.Text("字体颜色");
+                }
+            }
+
+            if (needSave)
+            {
+                Plugin.PluginLog.Info("Saving config");
+                this.Plugin.Configuration.Save();
+            }
         }
 
         public void Dispose() { }
