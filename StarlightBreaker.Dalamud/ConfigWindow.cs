@@ -57,9 +57,8 @@ namespace StarlightBreaker
                 {
                     needSave |= ImGui.Checkbox("斜体", ref this.config.FontConfig.Italics);
                     needSave |= ImGui.Checkbox("颜色", ref this.config.FontConfig.EnableColor);
-                    needSave |= ImGuiExt.UiColorPicker($"##picker_default", ref this.config.FontConfig.Color);
                     ImGui.SameLine();
-                    ImGui.Text("字体颜色");
+                    needSave |= ImGuiExt.UiColorPicker($"##picker_default", ref this.config.FontConfig.Color);
                 }
             }
 
