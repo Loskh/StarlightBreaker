@@ -65,10 +65,8 @@ namespace StarlightBreaker
 
 
         public delegate bool RaptureTextModulePartyFinderFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, bool unk1);
-
-        public AsmHook AgentLookingForGroupDetailedWindowTextFilterHook;
-        private GCHandle raptureTextModulePartyFinderFilterGcHandle;
         private RaptureTextModulePartyFinderFilterDelegate RaptureTextModulePartyFinderFilterOrigin;
+        private CallHook<RaptureTextModulePartyFinderFilterDelegate> AgentLookingForGroupDetailedWindowTextFilterHook;
 
         public unsafe Plugin()
         {
@@ -92,32 +90,10 @@ namespace StarlightBreaker
             this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);
             this.RaptureTextModuleChatLogFilterHook.Enable();
 
-            var detourDelegate = new RaptureTextModulePartyFinderFilterDelegate(this.RaptureTextModulePartyFinderFilter);
-            this.raptureTextModulePartyFinderFilterGcHandle = GCHandle.Alloc(detourDelegate);
-            RaptureTextModulePartyFinderFilterOrigin = Marshal.GetDelegateForFunctionPointer<RaptureTextModulePartyFinderFilterDelegate>(Scanner.ScanText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"));
-            var callbackPtr = Marshal.GetFunctionPointerForDelegate(detourDelegate);
-            var caveAllocation = (nint)NativeMemory.Alloc(8 * 3);
+            this.RaptureTextModulePartyFinderFilterOrigin = Marshal.GetDelegateForFunctionPointer<RaptureTextModulePartyFinderFilterDelegate>(Scanner.ScanText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"));
+
             var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
-            this.AgentLookingForGroupDetailedWindowTextFilterHook = new AsmHook(
-                hookAddress,
-                [
-                    "use64",
-                    $"mov r9, 0x{caveAllocation:x8}",
-                    "mov [r9], rcx",
-                    "mov [r9+0x8], rdx",
-                    "mov [r9+0x10], r8",
-                    $"mov rax, 0x{callbackPtr:x8}",
-                    "call rax",
-                    $"mov r9, 0x{caveAllocation:x8}",
-                    "mov rcx, [r9]",
-                    "mov rdx, [r9+0x8]",
-                    "mov r8,  [r9+0x10]",
-                    "mov r9,  0",
-                    "cmp [rbx+3272h], r12b",
-                ],
-                "AgentLookingForGroupDetailedWindowTextFilterHook",
-                AsmHookBehaviour.DoNotExecuteOriginal
-            );
+            this.AgentLookingForGroupDetailedWindowTextFilterHook = new CallHook<RaptureTextModulePartyFinderFilterDelegate>(hookAddress, RaptureTextModulePartyFinderFilter);
             this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
 
             //TODO:
@@ -267,10 +243,6 @@ namespace StarlightBreaker
 
         public void Dispose()
         {
-            if (this.raptureTextModulePartyFinderFilterGcHandle.IsAllocated)
-            {
-                this.raptureTextModulePartyFinderFilterGcHandle.Free();
-            }
             this.AgentLookingForGroupTextFilterHook?.Dispose();
             this.RaptureTextModuleChatLogFilterHook?.Dispose();
             AgentLookingForGroupDetailedWindowTextFilterHook?.Disable();

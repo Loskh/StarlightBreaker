@@ -10,4 +10,9 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<IsPackable>false</IsPackable>
   </PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="goatcorp.Reloaded.Hooks" Private="false" />
+		<Reference Include="Reloaded.Hooks.Definitions" Private="false" />
+	</ItemGroup>
 </Project>
