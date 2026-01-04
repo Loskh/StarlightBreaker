@@ -1,25 +1,17 @@
-﻿using Dalamud.Game;
-using Dalamud.Game.Command;
-using Dalamud.Game.Text;
+﻿using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using InteropGenerator.Runtime;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using static FFXIVClientStructs.FFXIV.Component.GUI.AtkComponentInputBase;
-using static System.Net.Mime.MediaTypeNames;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker
@@ -72,10 +64,10 @@ namespace StarlightBreaker
         Hook<RaptureTextModuleChatLogFilterDelegate> RaptureTextModuleChatLogFilterHook;
 
 
-        public delegate void RaptureTextModulePartyFinderFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, bool unk1);
+        public delegate bool RaptureTextModulePartyFinderFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, bool unk1);
 
         public AsmHook AgentLookingForGroupDetailedWindowTextFilterHook;
-        private static RaptureTextModulePartyFinderFilterDelegate RaptureTextModulePartyFinderFilterDetour =null!;
+        private GCHandle raptureTextModulePartyFinderFilterGcHandle;
         private RaptureTextModulePartyFinderFilterDelegate RaptureTextModulePartyFinderFilterOrigin;
 
         public unsafe Plugin()
@@ -100,27 +92,28 @@ namespace StarlightBreaker
             this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);
             this.RaptureTextModuleChatLogFilterHook.Enable();
 
-            RaptureTextModulePartyFinderFilterDetour = this.RaptureTextModulePartyFinderFilter;
-            RaptureTextModulePartyFinderFilterOrigin = Marshal.GetDelegateForFunctionPointer<RaptureTextModulePartyFinderFilterDelegate>(Scanner.ScanText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15"));
-            var callbackPtr = Marshal.GetFunctionPointerForDelegate(RaptureTextModulePartyFinderFilterDetour);
+            var detourDelegate = new RaptureTextModulePartyFinderFilterDelegate(this.RaptureTextModulePartyFinderFilter);
+            this.raptureTextModulePartyFinderFilterGcHandle = GCHandle.Alloc(detourDelegate);
+            RaptureTextModulePartyFinderFilterOrigin = Marshal.GetDelegateForFunctionPointer<RaptureTextModulePartyFinderFilterDelegate>(Scanner.ScanText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"));
+            var callbackPtr = Marshal.GetFunctionPointerForDelegate(detourDelegate);
             var caveAllocation = (nint)NativeMemory.Alloc(8 * 3);
+            var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
             this.AgentLookingForGroupDetailedWindowTextFilterHook = new AsmHook(
-                Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First(),
+                hookAddress,
                 [
                     "use64",
                     $"mov r9, 0x{caveAllocation:x8}",
                     "mov [r9], rcx",
                     "mov [r9+0x8], rdx",
                     "mov [r9+0x10], r8",
-
                     $"mov rax, 0x{callbackPtr:x8}",
                     "call rax",
-
                     $"mov r9, 0x{caveAllocation:x8}",
                     "mov rcx, [r9]",
                     "mov rdx, [r9+0x8]",
-                    "mov r8, [r9+0x10]",
-                    "mov r9, 0",
+                    "mov r8,  [r9+0x10]",
+                    "mov r9,  0",
+                    "cmp [rbx+3272h], r12b",
                 ],
                 "AgentLookingForGroupDetailedWindowTextFilterHook",
                 AsmHookBehaviour.DoNotExecuteOriginal
@@ -131,7 +124,6 @@ namespace StarlightBreaker
             //E8 ?? ?? ?? ?? 0F B6 BB ?? ?? ?? ?? 40 84 FF 74 ?? 48 8D 15
             //当出现无法处理招募的时候检查文本并显示导致无法发送的地方
 
-
             if (this.Configuration.Version == 0)
             {
                 this.ConfigWindow.IsOpen = true;
@@ -141,7 +133,7 @@ namespace StarlightBreaker
             }
         }
 
-        private void RaptureTextModulePartyFinderFilter(RaptureTextModule* textModule, UTF8String* text, nint unk, bool unk1)
+        private bool RaptureTextModulePartyFinderFilter(RaptureTextModule* textModule, UTF8String* text, nint unk, bool unk1)
         {
             if (this.Configuration.PartyFinderConfig.Enable)
             {
@@ -151,9 +143,9 @@ namespace StarlightBreaker
                     {
                         var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
                         original->Copy(text);
-                        RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
+                        var ret = RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
                         if (text->EqualTo(original))
-                            return;
+                            return ret;
                         var result = HighlightCensoredParts(original->ToString(), text->ToString(), this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
                         var bytes = result.Encode();
                         fixed (byte* pointer = bytes)
@@ -161,12 +153,15 @@ namespace StarlightBreaker
                             text->SetString((CStringPointer)pointer);
                         }
                         original->Dtor(true);
+                        return ret;
                     }
                 }
+                return true;
             }
             else
             {
-                RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
+                var ret = RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
+                return ret;
             }
         }
 
@@ -272,8 +267,13 @@ namespace StarlightBreaker
 
         public void Dispose()
         {
+            if (this.raptureTextModulePartyFinderFilterGcHandle.IsAllocated)
+            {
+                this.raptureTextModulePartyFinderFilterGcHandle.Free();
+            }
             this.AgentLookingForGroupTextFilterHook?.Dispose();
             this.RaptureTextModuleChatLogFilterHook?.Dispose();
+            AgentLookingForGroupDetailedWindowTextFilterHook?.Disable();
             this.AgentLookingForGroupDetailedWindowTextFilterHook?.Dispose();
             WindowSystem.RemoveAllWindows();
             ConfigWindow.Dispose();

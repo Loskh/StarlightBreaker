@@ -49,8 +49,6 @@ namespace StarlightBreaker
                     needSave |= ImGui.Checkbox("特殊显示##PartyFinder", ref this.config.PartyFinderConfig.EnableColor);
                 }
             }
-
-            var temp = BitConverter.GetBytes(this.config.FontConfig.Color);
             if (ImGui.CollapsingHeader("特殊显示设置", ImGuiTreeNodeFlags.DefaultOpen))
             {
                 using (ImRaii.Group())
