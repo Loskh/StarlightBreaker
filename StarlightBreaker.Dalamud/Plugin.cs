@@ -118,6 +118,7 @@ namespace StarlightBreaker
                     if (this.Configuration.FontConfig.Italics || this.Configuration.FontConfig.EnableColor)
                     {
                         var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
+                        original->Ctor();
                         original->Copy(text);
                         var ret = RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
                         if (text->EqualTo(original))
@@ -180,6 +181,7 @@ namespace StarlightBreaker
                     if (this.Configuration.FontConfig.Italics || this.Configuration.FontConfig.EnableColor)
                     {
                         var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
+                        original->Ctor();
                         original->Copy(text);
                         var ret = this.AgentLookingForGroupTextFilterHook.Original(agent, text);
                         if (text->EqualTo(original))

@@ -46,10 +46,10 @@ namespace StarlightBreaker
                 using (ImRaii.Group())
                 {
                     needSave |= ImGui.Checkbox("启用##PartyFinder", ref this.config.PartyFinderConfig.Enable);
-                    ImGui.Text("一些颜色或许会和其他插件产生奇妙反应,造成游戏崩溃");
-                    ImGui.Text("暂时还不知道原因");
-                    ImGui.Text("如遇到招募板崩溃");
-                    ImGui.Text("请先尝试禁用特殊显示,或者换个颜色试试");
+                    //ImGui.Text("一些颜色或许会和其他插件产生奇妙反应,造成游戏崩溃");
+                    //ImGui.Text("暂时还不知道原因");
+                    //ImGui.Text("如遇到招募板崩溃");
+                    //ImGui.Text("请先尝试禁用特殊显示,或者换个颜色试试");
                     needSave |= ImGui.Checkbox("特殊显示##PartyFinder", ref this.config.PartyFinderConfig.EnableColor);
                 }
             }
