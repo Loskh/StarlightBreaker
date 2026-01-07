@@ -85,7 +85,8 @@ namespace StarlightBreaker
 
 
             this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
-            this.AgentLookingForGroupTextFilterHook.Enable();
+            // 暂时关闭
+            // this.AgentLookingForGroupTextFilterHook.Enable();
 
             this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);
             this.RaptureTextModuleChatLogFilterHook.Enable();
@@ -94,7 +95,8 @@ namespace StarlightBreaker
 
             var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
             this.AgentLookingForGroupDetailedWindowTextFilterHook = new CallHook<RaptureTextModulePartyFinderFilterDelegate>(hookAddress, RaptureTextModulePartyFinderFilter);
-            this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
+            // 暂时关闭
+            // this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
 
             //TODO:
             //E8 ?? ?? ?? ?? 0F B6 BB ?? ?? ?? ?? 40 84 FF 74 ?? 48 8D 15
