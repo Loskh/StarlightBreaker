@@ -88,7 +88,6 @@ namespace StarlightBreaker
 
 
             this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
-            // 暂时关闭
             this.AgentLookingForGroupTextFilterHook.Enable();
 
             this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);

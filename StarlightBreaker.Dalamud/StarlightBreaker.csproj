@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.1">
 	<PropertyGroup>
 		<Name>StarlightBreaker</Name>
-		<Version>2.14.9</Version>
+		<Version>2.14.10</Version>
 		<Author>Loskh</Author>
 		<Punchline>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Punchline>
 		<Description>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Description>
