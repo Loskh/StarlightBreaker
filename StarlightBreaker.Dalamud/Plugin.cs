@@ -96,12 +96,12 @@ namespace StarlightBreaker
             this.RaptureTextModuleChatLogFilterHook.Enable();
 
             this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
-            //this.AgentLookingForGroupTextFilterHook.Enable();
+            this.AgentLookingForGroupTextFilterHook.Enable();
 
             var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
             PluginLog.Debug($"AgentLookingForGroupDetailedWindowTextFilterHook:{Util.DescribeAddress(hookAddress)}");
             this.AgentLookingForGroupDetailedWindowTextFilterHook = new CallHook<RaptureTextModulePartyFinderFilterDelegate>(hookAddress, RaptureTextModulePartyFinderFilter);
-            //this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
+            this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
 
 
             //由于"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"和"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15"是同一地址的不同签名ffxiv_dx11.exe+0x5419A3 函数地址为ffxiv_dx11.exe+0x97B820
