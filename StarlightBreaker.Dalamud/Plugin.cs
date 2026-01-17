@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
@@ -12,9 +13,11 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.Text;
 using InteropGenerator.Runtime;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker
@@ -60,16 +63,19 @@ namespace StarlightBreaker
         //private Hook<VulgarCheckDelegate> VulgarCheckHook;
         //private VulgarCheckDelegate VulgarCheck;
 
-        public delegate void AgentLookingForGroupTextFilterDelegate(AgentLookingForGroup* agent, Utf8String* text);
-        Hook<AgentLookingForGroupTextFilterDelegate> AgentLookingForGroupTextFilterHook;
-
         public delegate Utf8String* RaptureTextModuleChatLogFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, uint bytesNum);
         Hook<RaptureTextModuleChatLogFilterDelegate> RaptureTextModuleChatLogFilterHook;
+
+        public delegate uint AgentLookingForGroupTextFilterDelegate(AgentLookingForGroup* agent, Utf8String* text);
+        Hook<AgentLookingForGroupTextFilterDelegate> AgentLookingForGroupTextFilterHook;
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         public delegate void RaptureTextModulePartyFinderFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, bool unk1);
         private RaptureTextModulePartyFinderFilterDelegate RaptureTextModulePartyFinderFilterOrigin;
         private CallHook<RaptureTextModulePartyFinderFilterDelegate> AgentLookingForGroupDetailedWindowTextFilterHook;
+
+        public delegate Utf8String* AgentLookingForGroupProcessStringDelegate(AgentLookingForGroup* agent, Utf8String* text, uint bytesNum);
+        Hook<AgentLookingForGroupProcessStringDelegate> AgentLookingForGroupProcessStringHook;
 
         public unsafe Plugin()
         {
@@ -86,17 +92,16 @@ namespace StarlightBreaker
                 HelpMessage = "Open Config Window for StarlightBreaker"
             });
 
-
-            this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
-            this.AgentLookingForGroupTextFilterHook.Enable();
-
             this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);
             this.RaptureTextModuleChatLogFilterHook.Enable();
+
+            this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
+            //this.AgentLookingForGroupTextFilterHook.Enable();
 
             var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
             PluginLog.Debug($"AgentLookingForGroupDetailedWindowTextFilterHook:{Util.DescribeAddress(hookAddress)}");
             this.AgentLookingForGroupDetailedWindowTextFilterHook = new CallHook<RaptureTextModulePartyFinderFilterDelegate>(hookAddress, RaptureTextModulePartyFinderFilter);
-            this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
+            //this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
 
 
             //由于"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"和"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15"是同一地址的不同签名ffxiv_dx11.exe+0x5419A3 函数地址为ffxiv_dx11.exe+0x97B820
@@ -130,15 +135,8 @@ namespace StarlightBreaker
                         original->Ctor();
                         original->Copy(text);
                         RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
-                        if (text->EqualTo(original))
-                            return;
-                        var result = HighlightCensoredParts(original->ToString(), text->ToString(), this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                        var bytes = result.Encode();
-                        fixed (byte* pointer = bytes)
-                        {
-                            text->SetString((CStringPointer)pointer);
-                        }
-                        original->Dtor(true);
+                        HighlightCensoredParts(original, text, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
+                        original->Dtor();
                         return;
                     }
                 }
@@ -159,14 +157,7 @@ namespace StarlightBreaker
                 if (this.Configuration.ChatLogConfig.EnableColor)
                 {
                     var processedString = this.RaptureTextModuleChatLogFilterHook.Original(textModule, text, unk, bytesNum);
-                    if (processedString->EqualTo(text))
-                        return processedString;
-                    var result = HighlightCensoredParts(text->ToString(), processedString->ToString(), this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                    var bytes = result.Encode();
-                    fixed (byte* pointer = bytes)
-                    {
-                        processedString->SetString((CStringPointer)pointer);
-                    }
+                    HighlightCensoredParts(text, processedString, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
                     return processedString;
                 }
                 else
@@ -181,7 +172,7 @@ namespace StarlightBreaker
 
         }
 
-        private void AgentLookingForGroupTextFilterDetour(AgentLookingForGroup* agent, UTF8String* text)
+        private uint AgentLookingForGroupTextFilterDetour(AgentLookingForGroup* agent, UTF8String* text)
         {
             if (this.Configuration.PartyFinderConfig.Enable)
             {
@@ -192,24 +183,19 @@ namespace StarlightBreaker
                         var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
                         original->Ctor();
                         original->Copy(text);
-                        this.AgentLookingForGroupTextFilterHook.Original(agent, text);
+                        var ret = this.AgentLookingForGroupTextFilterHook.Original(agent, text);
                         if (text->EqualTo(original))
-                            return;
-                        var result = HighlightCensoredParts(original->ToString(), text->ToString(), this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                        var bytes = result.Encode();
-                        fixed (byte* pointer = bytes)
-                        {
-                            text->SetString((CStringPointer)pointer);
-                        }
+                            return ret;
+                        HighlightCensoredParts(original, text, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
                         original->Dtor(true);
                     }
                 }
-                return;
+                return 0;
             }
             else
             {
-                this.AgentLookingForGroupTextFilterHook.Original(agent, text);
-                return;
+                var ret = this.AgentLookingForGroupTextFilterHook.Original(agent, text);
+                return ret;
             }
         }
 
@@ -221,45 +207,94 @@ namespace StarlightBreaker
             ToggleConfigUI();
         }
 
-
-        private SeString HighlightCensoredParts(string original, string processed, bool italic, bool enableColor, ushort color)
+        private void HighlightCensoredParts(Utf8String* original, Utf8String* processed, bool italic, bool enableColor, ushort color)
         {
-            int length = original.Length;
-            if (length == 0)
-                return SeString.Empty;
+            if (original->EqualTo(processed))
+                return;
+
+            var originalSeString = SeString.Parse(original->AsSpan());
+            var processedSeString = SeString.Parse(processed->AsSpan());
+
+            var origPayloads = originalSeString.Payloads;
+            var procPayloads = processedSeString.Payloads;
+
+            if (origPayloads.Count != procPayloads.Count)
+            {
+                PluginLog.Warning("Payload count mismatch in HighlightCensoredParts.");
+                return;
+            }
 
             var builder = new SeStringBuilder();
-            int i = 0;
 
-            while (i < length)
+            for (int i = 0; i < origPayloads.Count; i++)
             {
-                if (original[i] == processed[i])
+                var orig = origPayloads[i];
+                var proc = procPayloads[i];
+
+                if (orig.Type != PayloadType.RawText || proc.Type != PayloadType.RawText)
                 {
-                    int start = i;
-                    while (i < length && original[i] == processed[i])
-                        i++;
-                    builder.AddText(original.Substring(start, i - start));
+                    builder.Add(orig);
+                    continue;
                 }
-                else
+
+                var origText = (TextPayload)orig;
+                var procText = (TextPayload)proc;
+
+                if (origText.Text == procText.Text)
                 {
-                    int start = i;
-                    while (i < length && original[i] != processed[i])
-                        i++;
-                    if (enableColor) builder.AddUiForeground(color);
-                    if (italic) builder.AddItalicsOn();
-                    builder.AddText(original.Substring(start, i - start));
-                    if (italic) builder.AddItalicsOff();
-                    if (enableColor) builder.AddUiForegroundOff();
+                    builder.Add(origText);
+                    continue;
+                }
+
+                if (origText.Text.Length != procText.Text.Length)
+                {
+                    builder.Add(origText);
+                    continue;
+                }
+
+                string origStr = origText.Text;
+                string procStr = procText.Text;
+                int length = origStr.Length;
+                int j = 0;
+
+                while (j < length)
+                {
+                    if (origStr[j] == procStr[j])
+                    {
+                        int start = j;
+                        while (j < length && origStr[j] == procStr[j])
+                            j++;
+                        builder.AddText(origStr.Substring(start, j - start));
+                    }
+                    else
+                    {
+                        int start = j;
+                        while (j < length && origStr[j] != procStr[j])
+                            j++;
+                        string censoredSegment = origStr.Substring(start, j - start);
+
+                        if (enableColor)
+                            builder.AddUiForeground(color);
+                        if (italic)
+                            builder.AddItalicsOn();
+
+                        builder.AddText(censoredSegment);
+
+                        if (italic)
+                            builder.AddItalicsOff();
+                        if (enableColor)
+                            builder.AddUiForegroundOff();
+                    }
                 }
             }
 
-            return builder.Build();
+            processed->SetString(builder.Build().EncodeWithNullTerminator());
         }
 
         public void Dispose()
         {
             this.AgentLookingForGroupTextFilterHook?.Dispose();
-            this.RaptureTextModuleChatLogFilterHook?.Dispose();
+            this.RaptureTextModuleChatLogFilterHook?.Dispose()  ;
             AgentLookingForGroupDetailedWindowTextFilterHook?.Disable();
             this.AgentLookingForGroupDetailedWindowTextFilterHook?.Dispose();
             WindowSystem.RemoveAllWindows();
