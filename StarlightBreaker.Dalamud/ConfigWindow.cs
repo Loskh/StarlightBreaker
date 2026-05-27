@@ -62,7 +62,7 @@ namespace StarlightBreaker
 
             if (needSave)
             {
-                Plugin.PluginLog.Info("Saving config");
+                Plugin.PluginLog.Info("保存设置 / Saving config");
                 this.Plugin.Configuration.Save();
             }
         }

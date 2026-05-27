@@ -33,8 +33,8 @@ namespace StarlightBreaker
         }
 
 
-        private static List<UIColor> uniqueSortedUiForeground;
-        private static List<UIColor> uniqueSortedUiGlow;
+        private static List<UIColor>? uniqueSortedUiForeground;
+        private static List<UIColor>? uniqueSortedUiGlow;
 
         private static void BuildUiColorLists()
         {

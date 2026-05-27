@@ -1,0 +1,110 @@
+name: Release Dalamud Plugin
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download Dalamud dev files
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:AppData "XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile latest.zip
+          Expand-Archive -Path latest.zip -DestinationPath $target -Force
+
+      - name: Validate tag matches project version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content "StarlightBreaker.Dalamud/StarlightBreaker.csproj"
+          $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          if (-not $version) {
+            throw "Version not found in StarlightBreaker.Dalamud/StarlightBreaker.csproj."
+          }
+
+          $tag = "${{ github.ref_name }}"
+          if ($tag -ne "v$version") {
+            throw "Tag '$tag' does not match project version 'v$version'."
+          }
+
+      - name: Restore
+        run: dotnet restore StarlightBreaker.Dalamud/StarlightBreaker.csproj --locked-mode
+
+      - name: Build
+        run: dotnet build StarlightBreaker.Dalamud/StarlightBreaker.csproj --configuration Release --no-restore
+
+      - name: Package release assets
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $assetDir = Join-Path $env:RUNNER_TEMP "release"
+          New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
+
+          $files = @(
+            "Output/StarlightBreaker.dll",
+            "Output/StarlightBreaker.deps.json",
+            "Output/StarlightBreaker.json"
+          )
+
+          foreach ($file in $files) {
+            if (-not (Test-Path $file)) {
+              throw "Missing release file: $file"
+            }
+
+            Copy-Item $file -Destination $assetDir
+          }
+
+          $zipPath = Join-Path $env:RUNNER_TEMP "StarlightBreaker-$tag.zip"
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+
+          Compress-Archive -Path (Join-Path $assetDir "*") -DestinationPath $zipPath
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StarlightBreaker-${{ github.ref_name }}
+          path: |
+            Output/StarlightBreaker.dll
+            Output/StarlightBreaker.deps.json
+            Output/StarlightBreaker.json
+            ${{ runner.temp }}/StarlightBreaker-${{ github.ref_name }}.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $zipPath = Join-Path $env:RUNNER_TEMP "StarlightBreaker-$tag.zip"
+          $assets = @(
+            $zipPath,
+            "Output/StarlightBreaker.dll",
+            "Output/StarlightBreaker.deps.json",
+            "Output/StarlightBreaker.json"
+          )
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @assets --clobber
+          } else {
+            gh release create $tag @assets --title $tag --generate-notes
+          }

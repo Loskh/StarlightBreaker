@@ -1,3 +1,4 @@
+using System;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -6,18 +7,13 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
+using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
 using FFXIVClientStructs.FFXIV.Client.System.String;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.Text;
 using InteropGenerator.Runtime;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using UTF8String = FFXIVClientStructs.FFXIV.Client.System.String.Utf8String;
 
 namespace StarlightBreaker
@@ -29,8 +25,6 @@ namespace StarlightBreaker
 
         [PluginService]
         internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-        [PluginService]
-        internal static ISigScanner Scanner { get; private set; } = null!;
         [PluginService]
         internal static ICommandManager CommandManager { get; private set; } = null!;
         [PluginService]
@@ -58,18 +52,13 @@ namespace StarlightBreaker
         //private VulgarCheckDelegate VulgarCheck;
 
         public delegate Utf8String* RaptureTextModuleChatLogFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, uint bytesNum);
-        Hook<RaptureTextModuleChatLogFilterDelegate> RaptureTextModuleChatLogFilterHook;
-
-        public delegate uint AgentLookingForGroupTextFilterDelegate(AgentLookingForGroup* agent, Utf8String* text);
-        Hook<AgentLookingForGroupTextFilterDelegate> AgentLookingForGroupTextFilterHook;
+        [Signature("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", DetourName = nameof(RaptureTextModuleChatLogFilterDetour))]
+        private Hook<RaptureTextModuleChatLogFilterDelegate> RaptureTextModuleChatLogFilterHook = null!;
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         public delegate void RaptureTextModulePartyFinderFilterDelegate(RaptureTextModule* textModule, Utf8String* text, nint unk, bool unk1);
-        private RaptureTextModulePartyFinderFilterDelegate RaptureTextModulePartyFinderFilterOrigin;
-        private CallHook<RaptureTextModulePartyFinderFilterDelegate> AgentLookingForGroupDetailedWindowTextFilterHook;
-
-        public delegate Utf8String* AgentLookingForGroupProcessStringDelegate(AgentLookingForGroup* agent, Utf8String* text, uint bytesNum);
-        Hook<AgentLookingForGroupProcessStringDelegate> AgentLookingForGroupProcessStringHook;
+        [Signature("40 53 56 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 49 8B F0", DetourName = nameof(RaptureTextModulePartyFinderFilterDetour), Fallibility = Fallibility.Fallible)]
+        private Hook<RaptureTextModulePartyFinderFilterDelegate>? RaptureTextModulePartyFinderFilterHook = null;
 
         public unsafe Plugin()
         {
@@ -80,30 +69,23 @@ namespace StarlightBreaker
 
             PluginInterface.UiBuilder.Draw += DrawUI;
             PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
+            PluginInterface.UiBuilder.OpenMainUi += ToggleConfigUI;
 
             CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
-                HelpMessage = "Open Config Window for StarlightBreaker"
+                HelpMessage = "打开 StarlightBreaker 设置窗口 / Open the StarlightBreaker config window"
             });
 
-            this.RaptureTextModuleChatLogFilterHook = GameInteropProvider.HookFromSignature<RaptureTextModuleChatLogFilterDelegate>("40 53 48 83 EC 20 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D", this.RaptureTextModuleChatLogFilterDetour);
+            GameInteropProvider.InitializeFromAttributes(this);
+
             this.RaptureTextModuleChatLogFilterHook.Enable();
 
-            this.AgentLookingForGroupTextFilterHook = GameInteropProvider.HookFromSignature<AgentLookingForGroupTextFilterDelegate>("48 89 5C 24 ?? 57 48 83 EC 20 C6 81 ?? ?? ?? ?? ?? 48 8B D9 48 8B 49 10 48 8B FA", this.AgentLookingForGroupTextFilterDetour);
-            this.AgentLookingForGroupTextFilterHook.Enable();
-
-            var hookAddress = Scanner.ScanAllText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15").First();
-            PluginLog.Debug($"AgentLookingForGroupDetailedWindowTextFilterHook:{Util.DescribeAddress(hookAddress)}");
-            this.AgentLookingForGroupDetailedWindowTextFilterHook = new CallHook<RaptureTextModulePartyFinderFilterDelegate>(hookAddress, RaptureTextModulePartyFinderFilter);
-            this.AgentLookingForGroupDetailedWindowTextFilterHook?.Enable();
+            this.RaptureTextModulePartyFinderFilterHook?.Enable();
 
 
             //由于"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11"和"E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 ?? 48 8D 15"是同一地址的不同签名ffxiv_dx11.exe+0x5419A3 函数地址为ffxiv_dx11.exe+0x97B820
             //之前的版本已经被Hook，因此开头不再是E9或E8,因此后面的ScanText会返回ffxiv_dx11.exe+0x5419A3,而不是0x97B820
             //var raptureTextModulePartyFinderFilterAddress = Scanner.ScanText("E8 ?? ?? ?? ?? 44 38 A3 ?? ?? ?? ?? 74 11");
-            var raptureTextModulePartyFinderFilterAddress = Scanner.ScanText("40 53 56 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 49 8B F0");
-            PluginLog.Debug($"RaptureTextModulePartyFinderFilter:{Util.DescribeAddress(raptureTextModulePartyFinderFilterAddress)}");
-            this.RaptureTextModulePartyFinderFilterOrigin = Marshal.GetDelegateForFunctionPointer<RaptureTextModulePartyFinderFilterDelegate>(raptureTextModulePartyFinderFilterAddress);
             //TODO:
             //E8 ?? ?? ?? ?? 0F B6 BB ?? ?? ?? ?? 40 84 FF 74 ?? 48 8D 15
             //当出现无法处理招募的时候检查文本并显示导致无法发送的地方
@@ -119,77 +101,64 @@ namespace StarlightBreaker
             }
         }
 
-        private void RaptureTextModulePartyFinderFilter(RaptureTextModule* textModule, UTF8String* text, nint unk, bool unk1)
+        private void RaptureTextModulePartyFinderFilterDetour(RaptureTextModule* textModule, UTF8String* text, nint unk, bool unk1)
         {
-            if (this.Configuration.PartyFinderConfig.Enable)
+            try
             {
-                if (this.Configuration.PartyFinderConfig.EnableColor)
+                if (this.Configuration.PartyFinderConfig.Enable)
                 {
-                    if (this.Configuration.FontConfig.Italics || this.Configuration.FontConfig.EnableColor)
+                    if (this.Configuration.PartyFinderConfig.EnableColor)
                     {
-                        var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
-                        original->Copy(text);
-                        RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
-                        HighlightCensoredParts(original, text, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                        original->Dtor();
-                        return;
+                        if (this.Configuration.FontConfig.Italics || this.Configuration.FontConfig.EnableColor)
+                        {
+                            var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
+                            original->Copy(text);
+                            this.RaptureTextModulePartyFinderFilterHook!.Original(textModule, text, unk, unk1);
+                            HighlightCensoredParts(original, text, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
+                            original->Dtor();
+                            return;
+                        }
                     }
+
+                    return;
                 }
-                return;
+
+                this.RaptureTextModulePartyFinderFilterHook!.Original(textModule, text, unk, unk1);
             }
-            else
+            catch (Exception ex)
             {
-                RaptureTextModulePartyFinderFilterOrigin(textModule, text, unk, unk1);
-                return;
+                PluginLog.Error(ex, "招募板文本过滤 Hook 失败，回退到原始调用。 / Party Finder filter hook failed; falling back to original.");
+                this.RaptureTextModulePartyFinderFilterHook!.Original(textModule, text, unk, unk1);
             }
         }
 
 
         private UTF8String* RaptureTextModuleChatLogFilterDetour(RaptureTextModule* textModule, UTF8String* text, nint unk, uint bytesNum)
         {
-            if (this.Configuration.ChatLogConfig.Enable)
+            try
             {
-                if (this.Configuration.ChatLogConfig.EnableColor)
+                if (this.Configuration.ChatLogConfig.Enable)
                 {
-                    var processedString = this.RaptureTextModuleChatLogFilterHook.Original(textModule, text, unk, bytesNum);
-                    HighlightCensoredParts(text, processedString, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                    return processedString;
+                    if (this.Configuration.ChatLogConfig.EnableColor)
+                    {
+                        var processedString = this.RaptureTextModuleChatLogFilterHook.Original(textModule, text, unk, bytesNum);
+                        HighlightCensoredParts(text, processedString, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
+                        return processedString;
+                    }
+                    else
+                    {
+                        return text;
+                    }
                 }
                 else
                 {
-                    return text;
+                    return this.RaptureTextModuleChatLogFilterHook.Original(textModule, text, unk, bytesNum);
                 }
             }
-            else
+            catch (Exception ex)
             {
+                PluginLog.Error(ex, "聊天日志过滤 Hook 失败，回退到原始调用。 / Chat log filter hook failed; falling back to original.");
                 return this.RaptureTextModuleChatLogFilterHook.Original(textModule, text, unk, bytesNum);
-            }
-
-        }
-
-        private uint AgentLookingForGroupTextFilterDetour(AgentLookingForGroup* agent, UTF8String* text)
-        {
-            if (this.Configuration.PartyFinderConfig.Enable)
-            {
-                if (this.Configuration.PartyFinderConfig.EnableColor)
-                {
-                    if (this.Configuration.FontConfig.Italics || this.Configuration.FontConfig.EnableColor)
-                    {
-                        var original = IMemorySpace.GetDefaultSpace()->Create<Utf8String>();
-                        original->Copy(text);
-                        var ret = this.AgentLookingForGroupTextFilterHook.Original(agent, text);
-                        if (text->EqualTo(original))
-                            return ret;
-                        HighlightCensoredParts(original, text, this.Configuration.FontConfig.Italics, this.Configuration.FontConfig.EnableColor, this.Configuration.FontConfig.Color);
-                        original->Dtor(true);
-                    }
-                }
-                return 0;
-            }
-            else
-            {
-                var ret = this.AgentLookingForGroupTextFilterHook.Original(agent, text);
-                return ret;
             }
         }
 
@@ -214,7 +183,7 @@ namespace StarlightBreaker
 
             if (origPayloads.Count != procPayloads.Count)
             {
-                PluginLog.Warning("Payload count mismatch in HighlightCensoredParts.");
+                PluginLog.Warning("Payload 数量不匹配，已跳过高亮处理。 / Payload count mismatch in HighlightCensoredParts.");
                 return;
             }
 
@@ -233,21 +202,27 @@ namespace StarlightBreaker
 
                 var origText = (TextPayload)orig;
                 var procText = (TextPayload)proc;
+                var origStr = origText.Text;
+                var procStr = procText.Text;
 
-                if (origText.Text == procText.Text)
+                if (origStr is null || procStr is null)
                 {
                     builder.Add(origText);
                     continue;
                 }
 
-                if (origText.Text.Length != procText.Text.Length)
+                if (origStr == procStr)
                 {
                     builder.Add(origText);
                     continue;
                 }
 
-                string origStr = origText.Text;
-                string procStr = procText.Text;
+                if (origStr.Length != procStr.Length)
+                {
+                    builder.Add(origText);
+                    continue;
+                }
+
                 int length = origStr.Length;
                 int j = 0;
 
@@ -287,10 +262,8 @@ namespace StarlightBreaker
 
         public void Dispose()
         {
-            this.AgentLookingForGroupTextFilterHook?.Dispose();
-            this.RaptureTextModuleChatLogFilterHook?.Dispose()  ;
-            AgentLookingForGroupDetailedWindowTextFilterHook?.Disable();
-            this.AgentLookingForGroupDetailedWindowTextFilterHook?.Dispose();
+            this.RaptureTextModuleChatLogFilterHook?.Dispose();
+            this.RaptureTextModulePartyFinderFilterHook?.Dispose();
             WindowSystem.RemoveAllWindows();
             ConfigWindow.Dispose();
             CommandManager.RemoveHandler(CommandName);

@@ -2,18 +2,69 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
 	<PropertyGroup>
 		<Name>StarlightBreaker</Name>
-		<Version>2.15.0</Version>
+		<Version>2.15.4</Version>
+		<!-- 本地优先使用 XIVLauncherCN；CI 回退到 SDK 默认路径或 DALAMUD_HOME。 / Prefer XIVLauncherCN locally; CI falls back to the SDK default or DALAMUD_HOME. -->
+		<DalamudLibPath Condition="'$(DALAMUD_HOME)' == '' and Exists('$(AppData)\XIVLauncherCN\addon\Hooks\dev\')">$(AppData)\XIVLauncherCN\addon\Hooks\dev\</DalamudLibPath>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<AssemblySearchPaths>{CandidateAssemblyFiles};{HintPathFromItem};{TargetFrameworkDirectory};{RawFileName};$(DalamudLibPath)</AssemblySearchPaths>
 		<Author>Loskh</Author>
-		<Punchline>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Punchline>
-		<Description>关闭屏蔽词过滤,并特殊显示聊天频道或招募板上发出的屏蔽词</Description>
-		<PackageProjectUrl>https://github.com/Loskh/StarlightBreaker</PackageProjectUrl>
+		<Punchline>解除聊天日志和招募板中的屏蔽词显示 / Show filtered chat and Party Finder text</Punchline>
+		<Description>解除聊天日志与招募板中的屏蔽词过滤，让原始消息内容可以直接查看；也可以用自定义颜色和斜体高亮被替换的文本片段，方便识别、排查和分享。 / Disables censorship filtering in chat logs and Party Finder text so the original message content can be viewed. Optionally highlights replaced text with custom color and italic styling to make filtered segments easier to identify, review, and share.</Description>
+		<Tags>chat;party-finder;filter;censorship;uncensor</Tags>
+		<CategoryTags>chat;party-finder;filter</CategoryTags>
+		<PackageProjectUrl>https://github.com/anmili2022/StarlightBreaker</PackageProjectUrl>
+		<RepoUrl>https://github.com/anmili2022/StarlightBreaker</RepoUrl>
+		<IconUrl>https://raw.githubusercontent.com/anmili2022/StarlightBreaker/main/StarlightBreaker.Dalamud/icon.png</IconUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<IsPackable>false</IsPackable>
+		<OutputPath>..\Output\</OutputPath>
   </PropertyGroup>
 
 	<ItemGroup>
-		<Reference Include="goatcorp.Reloaded.Hooks" Private="false" />
+		<Reference Update="Dalamud">
+			<HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
+		</Reference>
+		<Reference Update="Dalamud.Bindings.ImGui">
+			<HintPath>$(DalamudLibPath)Dalamud.Bindings.ImGui.dll</HintPath>
+		</Reference>
+		<Reference Update="Dalamud.Bindings.ImPlot">
+			<HintPath>$(DalamudLibPath)Dalamud.Bindings.ImPlot.dll</HintPath>
+		</Reference>
+		<Reference Update="Dalamud.Bindings.ImGuizmo">
+			<HintPath>$(DalamudLibPath)Dalamud.Bindings.ImGuizmo.dll</HintPath>
+		</Reference>
+		<Reference Update="FFXIVClientStructs">
+			<HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
+		</Reference>
+		<Reference Update="InteropGenerator.Runtime">
+			<HintPath>$(DalamudLibPath)InteropGenerator.Runtime.dll</HintPath>
+		</Reference>
+		<Reference Update="Newtonsoft.Json">
+			<HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
+		</Reference>
+		<Reference Update="Lumina">
+			<HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
+		</Reference>
+		<Reference Update="Lumina.Excel">
+			<HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
+		</Reference>
+		<Reference Update="Serilog">
+			<HintPath>$(DalamudLibPath)Serilog.dll</HintPath>
+		</Reference>
+		<Reference Update="Microsoft.Extensions.ObjectPool">
+			<HintPath>$(DalamudLibPath)Microsoft.Extensions.ObjectPool.dll</HintPath>
+		</Reference>
+		<Reference Include="Reloaded.Hooks" Private="false" />
+		<Reference Update="Reloaded.Hooks">
+			<HintPath>$(DalamudLibPath)goatcorp.Reloaded.Hooks.dll</HintPath>
+		</Reference>
 		<Reference Include="Reloaded.Hooks.Definitions" Private="false" />
+		<Reference Update="Reloaded.Hooks.Definitions">
+			<HintPath>$(DalamudLibPath)Reloaded.Hooks.Definitions.dll</HintPath>
+		</Reference>
 		<Reference Include="Iced" Private="false" />
+		<Reference Update="Iced">
+			<HintPath>$(DalamudLibPath)Iced.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 </Project>

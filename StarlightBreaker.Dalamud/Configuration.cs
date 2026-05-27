@@ -8,7 +8,7 @@ namespace StarlightBreaker
     public class ChatLogConfig
     {
         public bool Enable = true;
-        public bool EnableColor = false;
+        public bool EnableColor = true;
     }
     [Serializable]
     public class PartyFinderConfig
@@ -20,8 +20,8 @@ namespace StarlightBreaker
     public class FontConfig
     {
         public ushort Color = 17;
-        public bool Italics = false;
-        public bool EnableColor = false;
+        public bool Italics = true;
+        public bool EnableColor = true;
     }
     [Serializable]
     public class Configuration : IPluginConfiguration
